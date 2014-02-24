@@ -18,7 +18,7 @@ This document has four main parts
 - Remove the use of ComBat and perform the same analysis with an alternative established tool
 - Estimate the error introduced by ComBat and the consequences for the conclusion of the study
 - Perform a few more sanity checks to substantiate that the difference in results for the two above analysis is mainly due to error introduced by ComBat  
-      
+
         
 ### Read data and sample annotation
 The data files consist of 35 samples of which 5 are annotated as "WT" and were not
