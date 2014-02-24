@@ -1,0 +1,37 @@
+
+http://www.plosone.org/article/info%3Adoi%2F10.1371%2Fjournal.pone.0083757
+Fadi Towfic equal contributor,
+Jason M. Funt equal contributor,
+Kevin D. Fowler equal contributor,
+Shlomo Bakshi,
+Eran Blaugrund,
+Maxim N. Artyomov,
+Michael R. Hayden,
+David Ladkani.
+Rivka Schwartz,
+ Benjamin Zeskind
+
+GSE40566
+
+
+Vanskelig å være sikker på hva de har brukt som covariates i ComBat.
+
+
+data er gjenburk fra
+Shlomo Bakshi 1, Vered Chalifa-Caspi 2, Inbar Plaschkes 2, Igor Perevozkin 1, Michael Gurevich 3, Riki Schwartz †1 PhD
+Read More: http://informahealthcare.com/doi/full/10.1517/14728222.2013.778829
+http://informahealthcare.com/doi/full/10.1517/14728222.2013.778829
+
+
+table_s1
+Pheno og batch, men eksakt covariate mangler, må tolke prøvenavn (første bokstaver i code)
+
+table_s2
+Ekspresjonsverdier for prober brukt i variansemål, dvs om målinger i GA og generic er i rangen til reference?
+Denne tabellen har AVG målinger, som ikke stemmer med FC i 
+
+table s3
+The highly variable probes that were significant by F-test in either GA or generic (see methods section) and are depicted in Figure 1A.
+
+table s4
+Ranked list of probes by ratio of the variance in generic-activated samples to the variance in GA-activated samples.

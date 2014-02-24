@@ -1,39 +1,48 @@
-Reproduction and alternative analysis of data set 2 from Johnson et al
+
+
+Reproduction and alternative analysis of "Data Set 2" from "Adjusting batch effects in microarray data using Empirical Bayes methods."
 ========================================================
 
-Description how to obtain the data were found [here](https://groups.google.com/forum/#!msg/combat-user-forum/S9vBcXw8RGk/QIoD6oRBM9IJ) which had links to [dataExample2.txt](http://www.bu.edu/jlab/wp-assets/ComBat/data/dataExample2.txt)
+
+
+2014-02-23 07:02:33
+
+### Overview
+This report aims to show to what extent the use of ComBat led to false results in the second analysis example given in [Johnson et al.](http://biostatistics.oxfordjournals.org/content/8/1/118.abstract) The example named "Data Set 2" and the analysis are described in the [supplementary material](http://biostatistics.oxfordjournals.org/content/suppl/2006/04/21/kxj037.DC1/kxj037supp.pdf) for Johnson et al.
+Description on how to obtain the data were found [here](https://groups.google.com/forum/#!msg/combat-user-forum/S9vBcXw8RGk/QIoD6oRBM9IJ) which had links to [dataExample2.txt](http://www.bu.edu/jlab/wp-assets/ComBat/data/dataExample2.txt)
 and [sampleInfoExample2.txt](http://www.bu.edu/jlab/wp-assets/ComBat/data/sampleInfoExample2.txt)
 
-The data consist of 35 samples of which 5 are annotated as "WT" and are not
-refered to in the text or the plots. These are taken out before ComBat adjustment.
-
-Read data and sample annotation
--------------------------------------------------------
+This document has four main parts
+- Reproduce some of the results to show that we are working on the same data and analysis workflow
+- Remove the use of ComBat and perform the same analysis with an alternative established tool
+- Estimate the error introduced by ComBat and the consequences for the conclusion of the study
+- Perform a few more sanity checks to substantiate that the difference in results for the two above analysis is mainly due to error introduced by ComBat  
+      
+        
+### Read data and sample annotation
+The data files consist of 35 samples of which 5 are annotated as "WT" and were not
+referred to in Johnson et al. These are taken out in the beginning and are not used in this report.
 
 
 ```r
-library(pheatmap)
-library(RColorBrewer)
-library(sva)
+includelibs = c("pheatmap", "sva", "qvalue", "limma")
+lapply(includelibs, require, character.only = T)
 ```
 
 ```
+## Loading required package: pheatmap
+## Loading required package: sva
 ## Loading required package: corpcor
 ## Loading required package: mgcv
 ## Loading required package: nlme
 ## This is mgcv 1.7-28. For overview type 'help("mgcv-package")'.
-```
-
-```r
-library(qvalue)
+## Loading required package: qvalue
+## Loading required package: limma
 ```
 
 
 ```r
-
-orgdatamatrix = as.matrix(read.table("data/dataExample2.txt", sep = "\t", header = TRUE))
-datamatrix = orgdatamatrix[1:3000, ]  # for dev.
-datamatrix = orgdatamatrix  # for dev.
+datamatrix = as.matrix(read.table("data/dataExample2.txt", sep = "\t", header = TRUE))  #[1:3000,]# for dev.
 sampleannotation = read.table("data/sampleInfoExample2.txt", sep = "\t", header = TRUE, 
     stringsAsFactors = FALSE)
 rownames(sampleannotation) = sampleannotation$ArrayName
@@ -44,6 +53,8 @@ sampleannotation$Cell = factor(as.character(sampleannotation$Cell))
 datamatrix = datamatrix[, sampleannotation$Type != "WT"]
 sampleannotation = sampleannotation[sampleannotation$Type != "WT", ]
 sampleannotation$Type = factor(sampleannotation$Type)
+# dev/debug
+useparprior = TRUE
 print(dim(datamatrix))
 ```
 
@@ -51,49 +62,45 @@ print(dim(datamatrix))
 ## [1] 54675    30
 ```
 
+Inspection of the covariate/batch balance;
+
 ```r
-# dev/debug
-useparprior = TRUE
+print(table(sampleannotation[, c("Batch", "Type")]))
+```
+
+```
+##      Type
+## Batch C R
+##     1 2 6
+##     2 4 3
+##     3 6 9
 ```
 
 
-Reproduce results
--------------------------------------------------------
-First we try to reproduce the heatmap in Figure A.1, which uses 2698 genes with large variation.
-
-```r
-variatonmeasure = apply(datamatrix, 1, FUN= function(x){var(x)})
-#variatonmeasure = apply(datamatrix, 1, FUN= function(x){sd(x)/mean(x)}) #CV
-#clustermatrix = datamatrix[order(variatonmeasure, decreasing=TRUE),][1:50,]#[1:2698,]
-clustermatrix = datamatrix[order(variatonmeasure, decreasing=TRUE),][1:2698,]
-Batchcol = brewer.pal(8,"Set2")[1:3]
-names(Batchcol) = levels(sampleannotation$Batch)
-Typecol =brewer.pal(8,"Set2")[4:5]
-names(Typecol) = levels(sampleannotation$Type)
-ann_colors = list(Batch = Batchcol, Type = Typecol)
-```
-
-
+### Reproduce the original results
+Following the description in section A.1 and A.2 and figure texts in the supplementary materials for Johnson et al., we try to reproduce some of their results. First, the heatmap in Figure A.1.
+> A heatmap clustering of data set 2. 698 genes with large variation across all the samples are clustered.<cite> Johnson et al.
 
 
 ```r
-pheatmap(clustermatrix, scale = "row", cluster_rows = T, cluster_cols = T, color = colorRampPalette(c("red", 
-    "black", "green"))(n = 299), annotation = sampleannotation[, c("Batch", 
-    "Type")], annotation_colors = ann_colors, cellheight = NA, cellwidth = 13, 
-    fontsize = 12, drop_levels = TRUE, show_rownames = F, main = paste("Reproduced Fig A1.", 
-        sep = ""), border_color = NA, treeheight_row = 0)
+variationmeasure = apply(datamatrix, 1, FUN= function(x){var(x)})
+clustermatrix = datamatrix[order(variationmeasure, decreasing=TRUE),][1:2698,]
+pheatmap(clustermatrix, scale = "row", cluster_rows=T, cluster_cols=T, 
+         color = colorRampPalette(c("red", "black", "green"))(n = 299),
+         annotation = sampleannotation[, c("Batch", "Type")], 
+         cellheight=NA, cellwidth=13,fontsize=12,  drop_levels=TRUE, show_rownames=F,
+         main=paste("Reproduced Fig A1.",sep=""),border_color=NA,treeheight_row=0)
+rm(variationmeasure, clustermatrix)
 ```
 
-![plot of chunk reproduced_figA1](figure/reproduced_figA1.png) 
+![fig. 1](figure/reproduced_figA1.png) 
 
+The heatmap does not look exactly as Fig. A1 in the paper. This could be due to undocumented transformations preformed in Johnson et al., for example log-transformation or standardization. And there are different ways of calculating variation for a probe. What parameters that were used for the clustering could also be different. But the purpose of the figure was to show that a batch effect is present in the data and especially for batch 3. This is also achieved in the reproduced figure.
 
-The Heatmap is not exactly as Fig. A1 in the paper. This could be due to different ways of calculating variation for a probe and many other ways the clustring could have been performed. But the purpose of the figure was to show that a batch effect is present in the data and espeically for batch 3. This is also achived in the reproduced figure.
-
-Next 4 datasets were made,
-- EB2: batches 1 and 2 adjusted with nonparametric use of ComBat
-- EB3: All thre batches adjusted with nonparametric use of ComBat
-- Batch12: batches 1 and 2 unadjusted
-- Batch3: Only batch 3 (no adjustments)
+Next 3 data sets were made,
+- **EB2**: Batches 1 and 2 adjusted with non-parametric use of ComBat
+- **EB3**: All thee batches adjusted with non-parametric use of ComBat
+- **Batch3**: Only batch 3 (no adjustments)
 
 ```r
 mat = datamatrix[,sampleannotation$Batch %in% c("1","2")]
@@ -104,59 +111,42 @@ EB2 = as.matrix( sva::ComBat(
             numCovs=NULL, 
             par.prior=useparprior, 
             prior.plots=FALSE))
-
-mat = datamatrix[, ]
+rm(mat)
 EB3 = as.matrix( sva::ComBat(
-            dat=mat, 
-            batch=sampleannotation[colnames(mat),"Batch"], 
-            mod=model.matrix(~as.factor(sampleannotation[colnames(mat),"Type"])), 
+            dat=datamatrix, 
+            batch=sampleannotation[colnames(datamatrix),"Batch"], 
+            mod=model.matrix(~as.factor(sampleannotation[colnames(datamatrix),"Type"])), 
             numCovs=NULL, 
             par.prior=useparprior, 
             prior.plots=FALSE))
-Batch12 = datamatrix[,sampleannotation$Batch %in% c("1","2")]
 Batch3 = datamatrix[,sampleannotation$Batch=="3"]
 ```
 
 
 Next we try to re-create Figure A.2
 
-> A heatmap diagram of 770 genes from data set 2 after applying the EB batch adjustments.<cite> Johnson et al
+> A heatmap diagram of 770 genes from data set 2 after applying the EB batch adjustments.<cite> Johnson et al.
 
-There is no description in how the 770 genes were selected so we use the same approach as in the reprodution of Figure A.1
-
+There is no description in how the 770 genes were selected so we use the same approach as in the reproduction of Figure A.1.
 
 ```r
-clustermatrix = EB3
-variatonmeasure = apply(clustermatrix, 1, FUN = function(x) {
-    var(x)
-})
-# variatonmeasure = apply(datamatrix, 1, FUN= function(x){sd(x)/mean(x)})
-# #CV
-clustermatrix = clustermatrix[order(variatonmeasure, decreasing = TRUE), ][1:770, 
-    ]
-Batchcol = brewer.pal(8, "Set2")[1:3]
-names(Batchcol) = levels(sampleannotation$Batch)
-Typecol = brewer.pal(8, "Set2")[4:6]
-names(Typecol) = levels(sampleannotation$Type)
-Cellcol = brewer.pal(8, "Set1")[1:5]
-names(Cellcol) = levels(sampleannotation$Cell)
-ann_colors = list(Batch = Batchcol, Type = Typecol, Cell = Cellcol)
-pheatmap(clustermatrix, scale = "row", cluster_rows = T, cluster_cols = T, color = colorRampPalette(c("red", 
-    "black", "green"))(n = 299), annotation = sampleannotation[, c("Batch", 
-    "Type", "Cell")], cellheight = NA, cellwidth = 13, fontsize = 12, drop_levels = TRUE, 
-    show_rownames = F, main = paste("Reproduced Fig A2.", sep = ""), border_color = NA, 
-    treeheight_row = 0)
+variationmeasure = apply(EB3, 1, FUN= function(x){var(x)})
+clustermatrix = EB3[order(variationmeasure, decreasing=TRUE),][1:770,]
+pheatmap(clustermatrix, scale = "row", cluster_rows=T, cluster_cols=T, 
+         color = colorRampPalette(c("red", "black", "green"))(n = 299),
+         annotation = sampleannotation[, c("Batch", "Type", "Cell")],  
+         cellheight=NA, cellwidth=13,fontsize=12,  drop_levels=TRUE, show_rownames=F,
+         main=paste("Reproduced Fig A2.",sep=""),border_color=NA,treeheight_row=0)
+rm(variationmeasure, clustermatrix)
 ```
 
 ![plot of chunk reproduced_figA2](figure/reproduced_figA2.png) 
 
+Again the heatmap is not exactly as in Johnson et al, but the batch clustering is broken("Batch, bottom annotation row") and the samples cluster more by cell type("Cell", top annotation row) and treatment type("Type", middle annotation row).
 
+Now follows a few tests for differentially expressed probes.
+> Differential expression was assessed using Welchs t-test to determine the differential expression of RNAi versus control samples. EB2 produced at list of 86 significant genes at a false discovery (q-value) threshold of 0.05 (Storey and Tibshirani, 2003).<cite> Johnson et al.
 
-
-> Differential expression was assessed using Welchs t-test to determine the differential expression of RNAi versus control samples. EB2 produced at list of 86 significant genes at a false discovery (q-value) threshold of 0.05 (Storey and Tibshirani, 2003).<cite> Johnson et al
-
-
-T-test for EB2 and count probes q<0.05.
 
 ```r
 EB2_pvals = apply(EB2, 1 , 
@@ -173,10 +163,10 @@ print(table(qvalue(EB2_pvals)$qvalue<0.05))
 ## 54660    15
 ```
 
+Original number was **86**, reproduced number is **15**.
 
 
-
->The third batch alone produced a list of 37 significant genes using the same threshold. Crossing the significant gene lists, we observed 13 genes common in both lists (Fishers exact p-value < 1e-15). 
+> The third batch alone produced a list of 37 significant genes using the same threshold. <cite> Johnson et al.
 
 
 ```r
@@ -194,13 +184,14 @@ print(table(qvalue(Batch3_pvals)$qvalue<0.05))
 ## 54657    18
 ```
 
+Original number was **37**, reproduced number is **18**.
 
 
-
->Without any adjustment, combining these two batches produced a list of only 9 genes a q-value cutoff of 0.05
+> Without any adjustment, combining these two batches produced a list of only 9 genes a q-value cutoff of 0.05<cite> Johnson et al.
 
 
 ```r
+Batch12 = datamatrix[,sampleannotation$Batch %in% c("1","2")]
 Batch12_pvals = apply(Batch12, 1 , 
                   FUN=function(x){t.test(
                                     x[sampleannotation[colnames(Batch12), "Type"]=="C"],
@@ -215,9 +206,9 @@ print(table(qvalue(Batch12_pvals)$qvalue<0.05))
 ## 54671     4
 ```
 
+Original number was **9**, reproduced number is **4**.
 
-
->Welchs t-test was also applied to EB3 to find differential expressed genes; yielding 1599 genes significant at a q-value cutoff of 0.05
+> Welchs t-test was also applied to EB3 to find differential expressed genes; yielding 1599 genes significant at a q-value cutoff of 0.05. <cite> Johnson et al.
 
 
 ```r
@@ -235,8 +226,10 @@ print(table(qvalue(EB3_pvals)$qvalue<0.05))
 ## 53672  1003
 ```
 
+Original number was **1599**, reproduced number is **1003**.
 
->Reducing the q-value threshold to 0.01 yielded 488 significant genes
+> Reducing the q-value threshold to 0.01 yielded 488 significant genes. <cite> Johnson et al.
+
 
 ```r
 print(table(qvalue(EB3_pvals)$qvalue < 0.01))
@@ -248,8 +241,10 @@ print(table(qvalue(EB3_pvals)$qvalue < 0.01))
 ## 54330   345
 ```
 
+Original number was **488**, reproduced number is **345**.
 
->..decreasing the threshold further to 0.001 yielded 161 significant genes.
+> ..decreasing the threshold further to 0.001 yielded 161 significant genes.<cite> Johnson et al.
+
 
 ```r
 print(table(qvalue(EB3_pvals)$qvalue < 0.001))
@@ -261,75 +256,118 @@ print(table(qvalue(EB3_pvals)$qvalue < 0.001))
 ## 54572   103
 ```
 
-The reproduced number of significant probes are not the same as the reported ones, but they are not completly off.
+Original number was **161**, reproduced number is **103**.
+
+The reproduced numbers are not the same as the reported ones, but they are not completely off. Again this is likely to be due to undocumented steps performed by Johnson et al.
 
 
-```r
-require(limma)
-```
 
-```
-## Loading required package: limma
-```
+### Analysis without ComBat
+An alternative (and better?) way of handling batch effect is to include it in the model for the statistical test. This is possible in several tools and we choose to use the popular limma package (Smyth et al). 
 
-```r
-Type = as.factor(sampleannotation$Type)
-design = model.matrix(~0 + Type)
-colnames(design) = levels(Type)
-fit <- lmFit(EB3, design)
-cont.matrix = makeContrasts(contrasts = "R-C", levels = design)
-fit2 = contrasts.fit(fit, cont.matrix)
-fit2 <- eBayes(fit2)
-EB3_limma_pvalues = fit2$p.value[, 1]
-print(table(qvalue(EB3_limma_pvalues)$qvalue < 0.05))
-```
-
-```
-## 
-## FALSE  TRUE 
-## 53125  1550
-```
-
-
-Result when including batch in the statistical test
---------------
-
+We start with the data before ComBat adjustment. Limma works best with log transformed and between array normalized values, so first we set negative values to 1 and filter out probes that has this in more than half the samples. To ease later comparisons the same filter will also be applied to the EB3 data set. Then the test is run with the batch included as a blocking factor.
 
 ```r
+negativeprobesfilter = (rowSums(datamatrix >= 1) >= (0.5 * ncol(datamatrix))) & 
+    (rowSums(EB3 >= 1) >= (0.5 * ncol(EB3)))
+thismat = datamatrix[negativeprobesfilter, ]
+thismat[thismat < 1] = 1
+thismat = normalizeBetweenArrays(log2(thismat))
 Type = as.factor(sampleannotation$Type)
 Block = as.factor(sampleannotation$Batch)
-design <- model.matrix(~0 + Type + Block)
-fit <- lmFit(datamatrix, design)
+design = model.matrix(~0 + Type + Block)
+fit = lmFit(thismat, design)
 cont.matrix = makeContrasts(contrasts = "TypeR-TypeC", levels = design)
 fit2 = contrasts.fit(fit, cont.matrix)
-fit2 <- eBayes(fit2)
-datamatrix_limma_pvalues = fit2$p.value[, 1]
-print(table(qvalue(datamatrix_limma_pvalues)$qvalue < 0.05))
+datamatrix_limma_res = eBayes(fit2)
+rm(thismat, Type, Block, design, fit, cont.matrix, fit2)
+print(table(qvalue(datamatrix_limma_res$p.value[, 1])$qvalue < 0.05))
 ```
 
 ```
 ## 
 ## FALSE  TRUE 
-## 53905   770
+## 54018   377
 ```
 
+Number of differentially expressed probes found with the alternative anaysis is **377**.
 
+### Consequences of ComBat use for the end result
+
+Since limma was not the tool used in Johnson et al.'s workflow, we will first need to create the corresponding analysis in Limma for the whole ComBat adjusted data set in order to make a fair comparison.
 
 ```r
-hist(EB3_limma_pvalues, border = "blue", main = "P-values, ComBat vs Limma", 
+thismat = EB3[negativeprobesfilter, ]
+thismat[thismat < 1] = 1
+thismat = normalizeBetweenArrays(log2(thismat))
+Type = as.factor(sampleannotation$Type)
+Block = as.factor(sampleannotation$Batch)
+design = model.matrix(~0 + Type)
+fit = lmFit(thismat, design)
+cont.matrix = makeContrasts(contrasts = "TypeR-TypeC", levels = design)
+fit2 = contrasts.fit(fit, cont.matrix)
+EB3_limma_res = eBayes(fit2)
+rm(thismat, Type, Block, design, fit, cont.matrix, fit2)
+print(table(qvalue(EB3_limma_res$p.value[, 1])$qvalue < 0.05))
+```
+
+```
+## 
+## FALSE  TRUE 
+## 53392  1003
+```
+
+The number of genes below the significance threshold is fairly similar to the t-test.
+
+Now we can compare the P-values for the two alternative procedures.
+
+```r
+hist(EB3_limma_res$p.value[, 1], border = "blue", main = "P-values, ComBat vs Limma", 
     breaks = 100, xlab = "p-value")
-hist(datamatrix_limma_pvalues, border = "red", add = T, breaks = 100)
+hist(datamatrix_limma_res$p.value[, 1], border = "red", add = T, breaks = 100)
 legend("topright", legend = c("ComBat adjusted", "Limma adjusted"), text.col = c("blue", 
     "red"))
 ```
 
-![plot of chunk unnamed-chunk-13](figure/unnamed-chunk-13.svg) 
+![plot of chunk unnamed-chunk-14](figure/unnamed-chunk-14.svg) 
 
 This plot shows that the p-values calculated from the ComBat adjusted data is skewed towards the low end compared to when batch is considered inside the statistical test in limma. However, the difference is not large and from this plot alone it could be argued that ComBat is just better.
 
+Lets assume one aim of this study was to obtain a list of genes that differed between control and treatment with a significant cut-off of q<0.05. Then handling the batch effect with ComBat adjustment will yield a list of **1003** whereas a list of **377** probes would have been closer to the truth. Also it is of interest to note that it is mostly the same probes that are found.
+
+```r
+table( qvalue(datamatrix_limma_res$p.value[,1])$qvalue<0.05 ,
+         qvalue(EB3_limma_res$p.value[,1])$qvalue<0.05,
+       dnn=c("limma", "ComBat"))
+```
+
+```
+##        ComBat
+## limma   FALSE  TRUE
+##   FALSE 53390   628
+##   TRUE      2   375
+```
+
+And if they were to use the top 1000 probes in a gene set test, they would have found many of the same genes regardless of hadling batch effects by ComBat or limma.
+
+```r
+table( rank(datamatrix_limma_res$p.value[,1])  <=1000 & 
+         rank(EB3_limma_res$p.value[,1])<=1000   )
+```
+
+```
+## 
+## FALSE  TRUE 
+## 53578   817
+```
+
+Our conclusion is that for this study the error introduced by the use of ComBat would probably have a modest effect on the final result.
+
 Additional sanity checks
 ---------
+To substantiate that the result from the use of ComBat is less trustworthy than the alternative analysis we provide a few additional sanity checks.
 
+First we use random numbers drawn from the same distribution regardless of batch or covariate but retaining the batch/covariate design.
 
 ```r
 set.seed(100)
@@ -344,21 +382,10 @@ EBrand = as.matrix( sva::ComBat(
             prior.plots=FALSE))
 ```
 
-```
-## Found 3 batches
-## Found 1  categorical covariate(s)
-## Standardizing Data across genes
-## Fitting L/S model and finding priors
-## Finding parametric adjustments
-## Adjusting the Data
-```
-
-```r
-
-#source("../../helper_functions.r")
-#randommatrixbatch = addbatcheffect(randommatrix, sampleannotation$Batch, thismean=0, thissd=0)# introduce batch effect
-```
-
+Limma is then used in 3 ways
+- On the ComBat adjusted random numbers
+- On the random numbers including batch as a blocking factor
+- On the random numbers ignoring batch information
 
 ```r
 
@@ -366,30 +393,28 @@ Type = as.factor(sampleannotation$Type)
 design = model.matrix(~0 + Type)
 cont.matrix = makeContrasts ( contrasts="TypeR-TypeC", levels=design)  
 
-fit <- lmFit(EBrand, design)
+fit = lmFit(EBrand, design)
 fit2 = contrasts.fit(fit, cont.matrix)
-fit2 <- eBayes(fit2)
-EBrand_limma_pvalues = fit2$p.value[,1]
+EBrand_limma_pvalues = eBayes(fit2)$p.value[,1]
 
-fit <- lmFit(randommatrix, design)
+
+fit = lmFit(randommatrix, design)
 fit2 = contrasts.fit(fit, cont.matrix)
-fit2 <- eBayes(fit2)
-randommatrix_limma_pvalues = fit2$p.value[,1]
+randommatrix_limma_pvalues = eBayes(fit2)$p.value[,1]
 
 
 
 Block = as.factor(sampleannotation$Batch)
-design <- model.matrix(~0+Type+Block)
-
-fit <- lmFit(randommatrix, design)
+design = model.matrix(~0+Type+Block)
+fit = lmFit(randommatrix, design)
 cont.matrix = makeContrasts ( contrasts="TypeR-TypeC", levels=design) 
 fit2 = contrasts.fit(fit, cont.matrix)
-fit2 <- eBayes(fit2)
+fit2 = eBayes(fit2)
 randommatrix_limma_batch_pvalues = fit2$p.value[,1]
 
 ```
 
-
+Plotting the p-values
 
 ```r
 hist(EBrand_limma_pvalues, border = "blue", main = "P-values, Random numbers", 
@@ -400,13 +425,14 @@ legend("topright", legend = c("ComBat adjusted", "Limma adjusted", "No adjustmen
     text.col = c("blue", "black", "red"))
 ```
 
-![plot of chunk unnamed-chunk-16](figure/unnamed-chunk-16.svg) 
+![plot of chunk unnamed-chunk-19](figure/unnamed-chunk-19.svg) 
 
-The p-values for ComBat adjusted random numbers are enriched slighlty for low p-values. Indicating that the same enrichment seen for the real data is also false.
+The p-values for ComBat adjusted random numbers are slightly enriched for low p-values. Indicating that the same enrichment seen in the real data is also false.
 
-Another sanity check is to subset the real data into fictive batches. The EB2 data set contains the same number of samples with the same "Type" balance as the third batch alone. 
->The third batch was used for comparison against the EB2 analysis results because it was an identical experiment to EB2 other than the fact that it was conducted in a single batch.
-Thus it is interesting to inspect the p-value from these two indentical experiments, EB2 (batch 1 and 2 adjusted with ComBat) and batch 3 (no ComBat adjustment). These p-values are computed above.
+Another sanity check is to subset the real data into fictive batches. The idea behind this check stems from the observation that the EB2 data set contains the same number of samples with the same batch/covariate balance as the third batch alone. 
+> The third batch was used for comparison against the EB2 analysis results because it was an identical experiment to EB2 other than the fact that it was conducted in a single batch. <cite> Johnson et al.
+
+Thus it is interesting to inspect the p-value from these two identical experiments, EB2 (batch 1 and 2 adjusted with ComBat) and batch 3 (no ComBat adjustment). These p-values are already computed above.
 
 ```r
 hist(EB2_pvals, border = "blue", main = "P-values, real data", breaks = 100, 
@@ -416,9 +442,9 @@ legend("topright", legend = c("ComBat adjusted batch 1 and 2", "Batch 3"), text.
     "red"))
 ```
 
-![plot of chunk unnamed-chunk-17](figure/unnamed-chunk-17.svg) 
+![plot of chunk unnamed-chunk-20](figure/unnamed-chunk-20.svg) 
 
-The 2-batch experiment is able to retrive more significant genes than running all in one batch. A further test of this is to split batch 3 into two imaginary batches in the same design as for batch 1 and 2, and then look at the p-value distribution compared with the real batch 3.
+The 2-batch experiment is able to retrieve more genes as significant than running all in one batch for the same sample size. This is also observed by Johnson et al., but not commented. We claim that the apparent better result for the two-batch experiment is likely a consequence of the use of ComBat. A test of this is to split batch 3 into two imaginary batches with the same design as for batch 1 and 2, and then look at the p-value distribution compared with the real batch 3.
 
 
 ```r
@@ -427,8 +453,7 @@ Batch45_annot = sampleannotation[dimnames(Batch45)[[2]],]
 Batch45_annot$Batch="4"
 Batch45_annot$Batch[Batch45_annot$Type=="C"][1:4] = "5"
 Batch45_annot$Batch[Batch45_annot$Type=="R"][1:3] = "5"
-
-table(sampleannotation[sampleannotation$Batch %in% c("1", "2"), c("Batch", "Type")])
+print(table(sampleannotation[sampleannotation$Batch %in% c("1", "2"), c("Batch", "Type")]))
 ```
 
 ```
@@ -440,7 +465,7 @@ table(sampleannotation[sampleannotation$Batch %in% c("1", "2"), c("Batch", "Type
 ```
 
 ```r
-table(Batch45_annot[, c("Batch", "Type")])
+print(table(Batch45_annot[, c("Batch", "Type")]))
 ```
 
 ```
@@ -450,8 +475,9 @@ table(Batch45_annot[, c("Batch", "Type")])
 ##     5 4 3
 ```
 
-```r
+Then adjust the data with fictive batches and calculate p-values as done for the unadjusted batch 3.
 
+```r
 EB45 = as.matrix( sva::ComBat(
             dat=Batch45, 
             batch=Batch45_annot[colnames(Batch45),"Batch"], 
@@ -459,35 +485,137 @@ EB45 = as.matrix( sva::ComBat(
             numCovs=NULL, 
             par.prior=useparprior, 
             prior.plots=FALSE))
-```
-
-```
-## Found 2 batches
-## Found 1  categorical covariate(s)
-## Standardizing Data across genes
-## Fitting L/S model and finding priors
-## Finding parametric adjustments
-## Adjusting the Data
-```
-
-```r
 
 EB45_pvals = apply(EB45, 1 , 
                   FUN=function(x){t.test(
                                     x[Batch45_annot[colnames(EB45), "Type"]=="C"],
                                     x[Batch45_annot[colnames(EB45), "Type"]=="R"]
                                     )$p.value})
-
-hist(EB45_pvals, border="blue",  main="P-values, real data", breaks=100, xlab="p-value")
-hist(Batch3_pvals, border="red", add=T, breaks=100)
-legend("topright", legend=c("ComBat adjusted pseudo batches of batch", "Batch 3 not adjusted"), text.col=c("blue", "red"))
 ```
 
-![plot of chunk unnamed-chunk-18](figure/unnamed-chunk-18.svg) 
+
+```r
+hist(EB45_pvals, border="blue",  main="P-values, real data", breaks=100, xlab="p-value")
+hist(Batch3_pvals, border="red", add=T, breaks=100)
+legend("topright", legend=c("ComBat adjusted fictive-batches of batch 3", "Batch 3 not adjusted"), text.col=c("blue", "red"))
+```
+
+![plot of chunk unnamed-chunk-23](figure/unnamed-chunk-23.svg) 
+
+The fictive-batches version with ComBat seemingly outperforms the original. This plot looks very similar to the EB2 vs. Batch3 p-values, and for both, the p-values for the ComBat adjusted data are likely deflated due to ComBat use.
+
+The fictive batch asssignment above was just one of several possible. Repeating the selection 10 times showas that it was not a coincidence.
+
+
+```r
+fictivebatches_pvalcounts=list()
+runs = 10
+for(i in 1:runs)
+{
+Batch45 = Batch3
+Batch45_annot = sampleannotation[dimnames(Batch45)[[2]],]
+Batch45_annot$Batch="4"
+Batch45_annot$Batch[Batch45_annot$Type=="C"][sample(1:sum(Batch45_annot$Type=="C"), 4)] = "5"
+Batch45_annot$Batch[Batch45_annot$Type=="R"][sample(1:sum(Batch45_annot$Type=="R"), 3)] = "5"
+print(table(sampleannotation[sampleannotation$Batch %in% c("1", "2"), c("Batch", "Type")]))
+print(table(Batch45_annot[, c("Batch", "Type")]))
+
+EB45 = as.matrix( sva::ComBat(
+            dat=Batch45, 
+            batch=Batch45_annot[colnames(Batch45),"Batch"], 
+            mod=model.matrix( ~as.factor(Batch45_annot[colnames(Batch45),"Type"])  ), 
+            numCovs=NULL, 
+            par.prior=TRUE, 
+            prior.plots=FALSE))
+
+pvals = apply(EB45, 1 , 
+                  FUN=function(x){t.test(
+                                    x[Batch45_annot[colnames(EB45), "Type"]=="C"],
+                                    x[Batch45_annot[colnames(EB45), "Type"]=="R"]
+                                    )$p.value})
+
+fictivebatches_pvalcounts[[i]] = hist(pvals, plot=FALSE, breaks=100)$counts
+}
+```
+
+In order to save some computational time the parameteric version of ComBat was used for this.
+
+```r
+plot((1:20)/100, hist(Batch3_pvals, plot=FALSE, breaks=100)$counts[1:20], col="red",  main="P-values, fictive batches", 
+      xlab="p-value", ylab="Frequency", type="l", lwd=2, 
+      ylim=c(0, max(unlist(fictivebatches_pvalcounts))))
+for(i in 1:length(fictivebatches_pvalcounts))
+{
+  lines((1:20)/100,fictivebatches_pvalcounts[[i]][1:20], col="blue")
+}
+legend("topright", legend=c("ComBat adjusted fictive-batches of batch 3", "Batch 3 not adjusted"), text.col=c("blue", "red"))
+```
+
+![plot of chunk unnamed-chunk-25](figure/unnamed-chunk-25.svg) 
 
 
 
-Done!
 
 
+
+### References
+
+
+Johnson, WE, Rabinovic, A, and Li, C (2007). Adjusting batch effects in microarray expression data using Empirical Bayes methods. Biostatistics 8(1):118-127.
+
+Storey, J. D. and Tibshirani, R. (2003) Proc Natl Acad Sci U S A, 100, 9440-5.
+
+Raivo Kolde (2013). pheatmap: Pretty Heatmaps. R package version 0.7.7. http://CRAN.R-project.org/package=pheatmap
+
+Leek JT, Johnson WE, Parker HS, Jaffe AE, Storey JD.(2012) The sva package for removing batch effects and other unwanted variation in high-throughput experiments. Bioinformatics. 2012 Mar 15;28(6):882-3.
+
+Smyth, GK (2005). Limma: linear models for microarray data. In: 'Bioinformatics and Computational Biology Solutions
+  using R and Bioconductor'. R. Gentleman, V. Carey, S. Dudoit, R. Irizarry, W. Huber (eds), Springer, New York, pages
+  397-420.
+  
+  R Core Team (2013). R: A language and environment for statistical computing. R Foundation for Statistical Computing,
+  Vienna, Austria. URL http://www.R-project.org/
+
+  Yihui Xie (2013). knitr: A general-purpose package for dynamic report generation in R. R package version 1.5.
+
+  Yihui Xie (2013) Dynamic Documents with R and knitr. Chapman and Hall/CRC. ISBN 978-1482203530
+
+  Yihui Xie (2013) knitr: A Comprehensive Tool for Reproducible Research in R. In Victoria Stodden, Friedrich Leisch and
+  Roger D. Peng, editors, Implementing Reproducible Computational Research. Chapman and Hall/CRC. ISBN 978-1466561595
+  
+  RStudio Team (2012). RStudio: Integrated Development for R. RStudio, Inc., Boston, MA URL http://www.rstudio.com/.
+
+
+
+```r
+sessionInfo()
+```
+
+```
+R version 3.0.2 (2013-09-25)
+Platform: x86_64-w64-mingw32/x64 (64-bit)
+
+locale:
+[1] LC_COLLATE=English_United States.1252 
+[2] LC_CTYPE=English_United States.1252   
+[3] LC_MONETARY=English_United States.1252
+[4] LC_NUMERIC=C                          
+[5] LC_TIME=English_United States.1252    
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+[1] limma_3.18.12  qvalue_1.36.0  sva_3.8.0      mgcv_1.7-28   
+[5] nlme_3.1-113   corpcor_1.6.6  pheatmap_0.7.7 knitr_1.5     
+
+loaded via a namespace (and not attached):
+ [1] digest_0.6.4       evaluate_0.5.1     formatR_0.10      
+ [4] grid_3.0.2         lattice_0.20-24    Matrix_1.1-2      
+ [7] RColorBrewer_1.0-5 stringr_0.6.2      tcltk_3.0.2       
+[10] tools_3.0.2       
+```
+
+
+generation ended 2014-02-23 07:10:32. Time spent 8 minutes .
 
