@@ -24,19 +24,27 @@ This document has four main parts
 The data files consist of 35 samples of which 5 are annotated as "WT" and were not
 referred to in Johnson et al. These are taken out in the beginning and are not used in this report.
 
-```{r, results='hide',  message=FALSE}
+```{r, results='hide',  message=FALSE, error=FALSE}
 includelibs = c("pheatmap", "sva", "qvalue", "limma")
-lapply(includelibs, require, character.only=T)
+tmp = lapply(includelibs, require, character.only=T)
+print(tmp)
+if(any(!unlist(tmp)))
+{
+  stop( paste("Not able to find all packages. Please install ",
+              paste(includelibs[!unlist(tmp)], collapse=", ") )
+              )
+}
+rm(tmp)
 ```
-```{r, cache=TRUE}
-datamatrix = as.matrix(read.table("data/dataExample2.txt", sep="\t", header=TRUE))#[1:3000,]# for dev.
+```{r, cache=TRUE, tidy=FALSE}
+datamatrix = as.matrix(read.table("data/dataExample2.txt", sep="\t", header=TRUE))#[1:3000,]#dev.
 sampleannotation = read.table("data/sampleInfoExample2.txt", 
                               sep="\t", header=TRUE, stringsAsFactors=FALSE)
 rownames(sampleannotation)=sampleannotation$ArrayName
 sampleannotation$Batch=factor(as.character(sampleannotation$Batch)) 
 sampleannotation$Cell=factor(as.character(sampleannotation$Cell)) 
 # must be discrete for the pheatmap
-#table(sampleannotation$ArrayName==dimnames(datamatrix)[[2]]) # ordercheck
+#table(sampleannotation$ArrayName==dimnames(datamatrix)[[2]])#ordercheck
 datamatrix=datamatrix[,sampleannotation$Type!="WT"]
 sampleannotation=sampleannotation[sampleannotation$Type!="WT",]
 sampleannotation$Type=factor(sampleannotation$Type)

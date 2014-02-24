@@ -5,7 +5,7 @@ Reproduction and alternative analysis of "Data Set 2" from "Adjusting batch effe
 
 
 
-2014-02-23 07:02:33
+2014-02-24 14:24:26
 
 ### Overview
 This report aims to show to what extent the use of ComBat led to false results in the second analysis example given in [Johnson et al.](http://biostatistics.oxfordjournals.org/content/8/1/118.abstract) The example named "Data Set 2" and the analysis are described in the [supplementary material](http://biostatistics.oxfordjournals.org/content/suppl/2006/04/21/kxj037.DC1/kxj037supp.pdf) for Johnson et al.
@@ -26,35 +26,30 @@ referred to in Johnson et al. These are taken out in the beginning and are not u
 
 ```r
 includelibs = c("pheatmap", "sva", "qvalue", "limma")
-lapply(includelibs, require, character.only = T)
-```
-
-```
-## Loading required package: pheatmap
-## Loading required package: sva
-## Loading required package: corpcor
-## Loading required package: mgcv
-## Loading required package: nlme
-## This is mgcv 1.7-28. For overview type 'help("mgcv-package")'.
-## Loading required package: qvalue
-## Loading required package: limma
+tmp = lapply(includelibs, require, character.only = T)
+print(tmp)
+if (any(!unlist(tmp))) {
+    stop(paste("Not able to find all packages. Please install ", paste(includelibs[!unlist(tmp)], 
+        collapse = ", ")))
+}
+rm(tmp)
 ```
 
 
 ```r
-datamatrix = as.matrix(read.table("data/dataExample2.txt", sep = "\t", header = TRUE))  #[1:3000,]# for dev.
-sampleannotation = read.table("data/sampleInfoExample2.txt", sep = "\t", header = TRUE, 
-    stringsAsFactors = FALSE)
-rownames(sampleannotation) = sampleannotation$ArrayName
-sampleannotation$Batch = factor(as.character(sampleannotation$Batch))
-sampleannotation$Cell = factor(as.character(sampleannotation$Cell))
+datamatrix = as.matrix(read.table("data/dataExample2.txt", sep="\t", header=TRUE))#[1:3000,]#dev.
+sampleannotation = read.table("data/sampleInfoExample2.txt", 
+                              sep="\t", header=TRUE, stringsAsFactors=FALSE)
+rownames(sampleannotation)=sampleannotation$ArrayName
+sampleannotation$Batch=factor(as.character(sampleannotation$Batch)) 
+sampleannotation$Cell=factor(as.character(sampleannotation$Cell)) 
 # must be discrete for the pheatmap
-# table(sampleannotation$ArrayName==dimnames(datamatrix)[[2]]) # ordercheck
-datamatrix = datamatrix[, sampleannotation$Type != "WT"]
-sampleannotation = sampleannotation[sampleannotation$Type != "WT", ]
-sampleannotation$Type = factor(sampleannotation$Type)
-# dev/debug
-useparprior = TRUE
+#table(sampleannotation$ArrayName==dimnames(datamatrix)[[2]])#ordercheck
+datamatrix=datamatrix[,sampleannotation$Type!="WT"]
+sampleannotation=sampleannotation[sampleannotation$Type!="WT",]
+sampleannotation$Type=factor(sampleannotation$Type)
+#dev/debug
+useparprior=TRUE
 print(dim(datamatrix))
 ```
 
@@ -145,7 +140,7 @@ rm(variationmeasure, clustermatrix)
 Again the heatmap is not exactly as in Johnson et al, but the batch clustering is broken("Batch, bottom annotation row") and the samples cluster more by cell type("Cell", top annotation row) and treatment type("Type", middle annotation row).
 
 Now follows a few tests for differentially expressed probes.
-> Differential expression was assessed using Welchs t-test to determine the differential expression of RNAi versus control samples. EB2 produced at list of 86 significant genes at a false discovery (q-value) threshold of 0.05 (Storey and Tibshirani, 2003).<cite> Johnson et al.
+> Differential expression was assessed using Welch’s t-test to determine the differential expression of RNAi versus control samples. EB2 produced at list of 86 significant genes at a false discovery (q-value) threshold of 0.05 (Storey and Tibshirani, 2003).<cite> Johnson et al.
 
 
 ```r
@@ -208,7 +203,7 @@ print(table(qvalue(Batch12_pvals)$qvalue<0.05))
 
 Original number was **9**, reproduced number is **4**.
 
-> Welchs t-test was also applied to EB3 to find differential expressed genes; yielding 1599 genes significant at a q-value cutoff of 0.05. <cite> Johnson et al.
+> Welch’s t-test was also applied to EB3 to find differential expressed genes; yielding 1599 genes significant at a q-value cutoff of 0.05. <cite> Johnson et al.
 
 
 ```r
@@ -504,7 +499,7 @@ legend("topright", legend=c("ComBat adjusted fictive-batches of batch 3", "Batch
 
 The fictive-batches version with ComBat seemingly outperforms the original. This plot looks very similar to the EB2 vs. Batch3 p-values, and for both, the p-values for the ComBat adjusted data are likely deflated due to ComBat use.
 
-The fictive batch asssignment above was just one of several possible. Repeating the selection 10 times showas that it was not a coincidence.
+The fictive batch asssignment above was just one of several possible. Repeating the selection 10 times shows that the lower p-values was not a coincidence.
 
 
 ```r
@@ -593,29 +588,28 @@ sessionInfo()
 
 ```
 R version 3.0.2 (2013-09-25)
-Platform: x86_64-w64-mingw32/x64 (64-bit)
+Platform: x86_64-apple-darwin10.8.0 (64-bit)
 
 locale:
-[1] LC_COLLATE=English_United States.1252 
-[2] LC_CTYPE=English_United States.1252   
-[3] LC_MONETARY=English_United States.1252
-[4] LC_NUMERIC=C                          
-[5] LC_TIME=English_United States.1252    
+[1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
 
 attached base packages:
 [1] stats     graphics  grDevices utils     datasets  methods   base     
 
 other attached packages:
-[1] limma_3.18.12  qvalue_1.36.0  sva_3.8.0      mgcv_1.7-28   
+[1] limma_3.18.13  qvalue_1.36.0  sva_3.8.0      mgcv_1.7-28   
 [5] nlme_3.1-113   corpcor_1.6.6  pheatmap_0.7.7 knitr_1.5     
 
 loaded via a namespace (and not attached):
- [1] digest_0.6.4       evaluate_0.5.1     formatR_0.10      
- [4] grid_3.0.2         lattice_0.20-24    Matrix_1.1-2      
- [7] RColorBrewer_1.0-5 stringr_0.6.2      tcltk_3.0.2       
-[10] tools_3.0.2       
+ [1] codetools_0.2-8    digest_0.6.4       evaluate_0.5.1    
+ [4] formatR_0.10       grid_3.0.2         lattice_0.20-24   
+ [7] Matrix_1.1-2       RColorBrewer_1.0-5 stringr_0.6.2     
+[10] tcltk_3.0.2        tools_3.0.2       
 ```
 
 
-generation ended 2014-02-23 07:10:32. Time spent 8 minutes .
+generation ended 2014-02-24 14:34:18. Time spent 10 minutes .
 
+table(sampleannotation[ sampleannotation$Batch!="3", c("Batch", "Cell")]  )
+table(Batch45_annot[, c("Batch", "Cell")])
+table(sampleannotation[, c("Batch", "Cell")])
