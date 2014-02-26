@@ -15,7 +15,7 @@ This document has five main parts
 - Reproduce some of the results to show that we are working on the same data and analysis workflow
 - Remove the use of ComBat and perform an similar analysis with alternative established tools
 - Estimate the error introduced by ComBat and the consequences for the conclusion of the study
-- Perform a few more sanity checks to substantiate that the difference in results for the two above analysis is mainly due to error introduced by ComBat
+- Perform a few more sanity checks to substantiate that the difference in results for the two above analysis is mainly introduced by ComBat
 
 
 ### Getting the data
@@ -26,14 +26,14 @@ includelibs = c("Biobase", "GEOquery", "sva", "limma",
                  "preprocessCore")
 lapply(includelibs, require, character.only=T)
 ```
-The important sample information is described in Table S1 from Towfic et al. the its usage in ComBat is described briefly in the methods;
+The important sample information is described in Table S1 from Towfic et al. and its usage in ComBat is described briefly in the methods;
 >  Each microarray’s chip designation was supplied a batch label; there were 18 batches in all. The labels for the treatments (i.e. drug product, reference standard…) were added as covariates.<cite> Towfic et al.
 
 Table S1 does have a "Chip"- coloumn, unfortunatly there is no dedicated "treatment"-coloumn.
 Communication with the corresponding author yielded this explanation
 > ..and the only thing we used as a covariate was the unique treatment names themselves (e.g. ³Medium² or ³RS").
 
-Based on these descriptions and the annotation for the GEO deposit, we compiled a more complete sample annotation file.
+Based on these descriptions and the annotation for the GEO deposit, we compiled a more complete sample annotation file (sampleannotation.csv).
 
 ```{r}
 sampleannotation = read.table("data/sampleannotation.csv", sep="\t", header=TRUE,  stringsAsFactors=FALSE)
@@ -42,7 +42,13 @@ sampleannotation$chip = as.character(sampleannotation$chip)
 dimnames(sampleannotation)[[1]] = sampleannotation$code
 head(sampleannotation)
 ```
-The "covariate"-coloumn is made based on the "code"-coloumn, but might not match  to what were actually used. The last two coloumns are from the GEO deposit and reveal that 3 of the samples do not have data and are taken out.
+The "covariate"-coloumn is made based on the "code"-coloumn, but might not match  to what were actually used for all samples. The last two coloumns are from the GEO deposit and reveal that 3 of the samples do not have data and are taken out.
+
+The nameing convention seeme to differ slightly between the Table S1 and the text in Towfic et al. This is our interpretation of covariate labels and its corresponding name in the text.
+- **DP** refferd to as GA (but not GA as in table S1)
+- **N** refferd to as "generic"
+- **M** reffered to as "medium"
+- **RS** reffered to as "reference standard""
 
 ```{r}
 # take out 3 samples that are not assign to a geoaccession. Failed QC?
@@ -50,17 +56,24 @@ sampleannotation = sampleannotation[!is.na(sampleannotation$geoaccession),]
 ```
 The batch/covariate design shows many batches and covariate groups.
 ```{r}
-# the batch/covariate design
 table(sampleannotation[, c("chip", "covariate")])
 ```
 A look at the most interesting groups, "DP"(drug product) and "N"(generic) reveals a lack of balance.
 ```{r}
-table(sampleannotation[sampleannotation$covariate %in% c("DP", "N"), c("chip", "covariate")])
+table(sampleannotation[sampleannotation$covariate %in% c("DP", "N"), 
+                       c("chip", "covariate")])
 ```
 
 > The microarray data have been deposited in the Gene Expression Omnibus, under accession number [GSE40566](http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE40566)
 
-The processed data from the above GEO deposit was deposited for another publication which did not processes the data as described in Towfic et al. (personal communication). The raw data linked to as [GSE40566_RAW.tar](http://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE40566&format=file) and [GSE40566_non_normalized.txt.gz](http://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE40566&format=file&file=GSE40566%5Fnon%5Fnormalized%2Etxt%2Egz) were thus used, although it is not confirmed that this is the version of the data actually used in Towfic et al.
+The processed data from the above GEO deposit was deposited for another publication which did not processes the data as described in Towfic et al. (personal communication). The files linked to as [GSE40566_RAW.tar](http://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE40566&format=file) and [GSE40566_non_normalized.txt.gz](http://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE40566&format=file&file=GSE40566%5Fnon%5Fnormalized%2Etxt%2Egz) were thus used, although it is not confirmed that this is the version of the data actually used in Towfic et al.
+
+A recap of the important input files used in this report:
+- **sampleannotation.csv** holds the important sample/batch/covariate assignment. Compiled based on inforamtion in Towfic et al, the geo deposit and personal communication.
+- **GSE40566_non_normalized.txt** the measurments in a sample vs probe matrix. From the [GEO deposit](http://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE40566&format=file&file=GSE40566%5Fnon%5Fnormalized%2Etxt%2Egz).
+- **GPL6887_MouseWG-6_V2_0_R3_11278593_A.txt** the probe annotation needed for the datarow to probe to gene matching. From the GEO deposit inside the [GSE40566_RAW.tar](http://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE40566&format=file).
+
+Reading the data.
 ```{r}
 # the output from Illumina software.
 rawdata = read.table("not_in_github/GSE40566_non_normalized.txt", sep="\t", header=TRUE, stringsAsFactors=FALSE)
@@ -69,7 +82,7 @@ rawdata = read.table("not_in_github/GSE40566_non_normalized.txt", sep="\t", head
 rawannotation = read.table("not_in_github/GPL6887_MouseWG-6_V2_0_R3_11278593_A.txt", sep="\t", header=TRUE, stringsAsFactors=FALSE, skip=8, comment.char="", quote="", fill=TRUE)
 ```
 
-Then some formatting is needed to match the probe information to the measurments and the measurments to the sample information.
+Some formatting is needed to match the probe information to the measurments and the measurments to the sample information.
 ```{r}
 # annotation file has two separate tables, one for experimental and one at the end for controls.
 # splitting and fixing the tables:
@@ -104,10 +117,10 @@ dimnames(datamatrix_raw)[[1]] = probeannotation$Probe_Id
 datamatrix_raw = datamatrix_raw[, match(sampleannotation$code , dimnames(datamatrix_raw)[[2]])]
 ```
 
-Several tables with results are presented in the Supporting Information of in Towfic et al. We are aiming to reproduce these. Unfortunatly these were only presented in a pdf-format not easely parsed by a computer. We had to resort to a ad-hoc method of cut-and-paste from pdf into text files which were somewhat polluted by pdf-formatting code. For some tables about 10% of the rows will be lost, but the rest will suffice.
+Several tables with results are presented in the Supporting Information in Towfic et al. We are aiming to reproduce these. Unfortunatly these were only presented in a pdf-format not easely parsed by a computer. We had to resort to a ad-hoc method of cut-and-paste from pdf into text files which were somewhat polluted by pdf-formatting code. For some tables about 10% of the rows will be lost, but the rest will suffice for our purpose.
 
 ```{r}
-
+# Table S2
 table_s2 = read.table("data/table_s2.csv", sep="\t", header=TRUE, stringsAsFactors=FALSE, fill=TRUE)
 table_s2 = as.matrix(table_s2)
 table_s2[,3:6] = as.numeric(table_s2[,3:6])
@@ -121,10 +134,11 @@ for(n in 3:6)
   table_s2[,n]=as.numeric(table_s2[,n])
 }
 
-
+# Table S3
 table_s3 = read.table("data/table_s3.csv", sep="\t", header=TRUE, stringsAsFactors=FALSE, fill=TRUE) 
 #one Probe, ("1770446" or "ILM_1770446") was not found in the data and was thus removed from this textfile
 
+# Table S4
 table_s4 = read.table("data/table_s4.csv", sep="\t", header=TRUE, stringsAsFactors=FALSE, fill=TRUE)
 #not able to copy-paste the pdf whitout a lot of gibberish clutter the data. Some probes are lost!
 a = is.na(as.numeric(table_s4$Var_generic_vs_Var_GA))
@@ -132,6 +146,7 @@ print(paste("Lost rows table s4: ", sum(a)))
 table_s4=table_s4[!a,]
 table_s4$Var_generic_vs_Var_GA = as.numeric(table_s4$Var_generic_vs_Var_GA)
 
+# Table S5
 table_s5 = read.table("data/table_s5.csv", sep="\t", header=TRUE, stringsAsFactors=FALSE, fill=TRUE)
 tmp = as.matrix(table_s5)
 tmp[,3:14] = as.numeric(tmp[,3:14])
@@ -145,26 +160,26 @@ table_s5$Fold_Change = as.numeric(table_s5$Fold_Change)
 
 ### Reproduce the original results
 
+> Starting with background-corrected bead-level signals, we quantile normalized the extracted data for all samples across all 46,547 probes via the “preprocessCore” package in R.
+
 ```{r}
-set.seed(100)
 datamatrices = list()
 datamatrices[["real_raw"]] = datamatrix_raw#[1:5000,]
 
 # used in paper, but seems to do the same as the limma version. Except it loses dimnames
 datamatrices[["real_qnorm"]] = normalize.quantiles(datamatrices[["real_raw"]]) 
 dimnames(datamatrices[["real_qnorm"]]) = dimnames(datamatrices[["real_raw"]])
+```
 
+> We then corrected for batch variation with ComBat [17] as implemented in the SVA package of R [18]. Each microarray’s chip designation was supplied a batch label; there were 18 batches in all. The labels for the treatments (i.e. drug product, reference standard…) were added as covariates. 
+
+```{r}
 mod = model.matrix(~as.factor(sampleannotation$covariate))
 mod0 = model.matrix(~1,data=sampleannotation)
 
 datamatrices[["real_combat_covariates"]]= as.matrix(ComBat(dat=datamatrices[["real_qnorm"]], batch=sampleannotation$chip, mod=mod, numCovs=NULL, par.prior=TRUE, prior.plots=FALSE))
 
 ```
-The nameing convention seeme to differ slightly between the Table S1 and the text. This is the covariate labels with its corresponging name in the text.
-- **DP** refferd to as GA (but not GA as in table S1)
-- **N** refferd to as "generic"
-- **M** reffered to as "medium"
-- **RS** reffered to as "reference standard""
 
 First we will try to reproduce Table S2.
 
@@ -247,8 +262,7 @@ hist(pvalsDP,
      breaks=100, border="blue", add=T)
 
 ```
-# The PRobes from table_s3 are at least enriched for low p-values.
-# But table_s3 is not fully reproduced. More detailed explanation is needed
+The probes from Table S3 are at least enriched for low p-values. A more detailed explanation is needed for a better reproducablity.
 
 
 
@@ -337,7 +351,11 @@ DP = sampleannotation$covariate=="DP"
 N = sampleannotation$covariate=="N"
 ttest_p = apply(datamatrices[["real_combat_covariates"]], 1, function(x) { t.test(x[DP], x[N])$p.value } )
 anova_p = apply(datamatrices[["real_combat_covariates"]], 1, function(x){ summary(aov(x[DP|N]~sampleannotation$covariate[DP|N]))[[1]][1,5]}  )  # aov er kanskje feil for dette, Er ikke live mange pr?ver i guppene.
-wilcoxon_p = apply(datamatrices[["real_combat_covariates"]], 1, function(x) { wilcox.test(x[sampleannotation$covariate=="DP"], x[sampleannotation$covariate=="N"])$p.value } )
+
+# wilcox.test gives a few hundred warnings for ties.
+# Warning: cannot compute exact p-value with ties
+wilcoxon_p = suppressWarnings(apply(datamatrices[["real_combat_covariates"]], 1, function(x) { wilcox.test(x[sampleannotation$covariate=="DP"], x[sampleannotation$covariate=="N"])$p.value } )
+)
 ```
 ```{r dev='png', fig.width=8, fig.height=8, fig.show='hold', tidy=FALSE}
 par(mfrow=c(2, 2))

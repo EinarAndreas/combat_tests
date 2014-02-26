@@ -181,7 +181,7 @@ hljs.initHighlightingOnLoad();
 <body>
 <h1>Reproduction and alternative analysis of &ldquo;Comparing the Biological Impact of Glatiramer Acetate with the Biological Impact of a Generic&rdquo;</h1>
 
-<p>2014-02-25 07:25:57</p>
+<p>2014-02-26 10:52:38</p>
 
 <h3>Overview</h3>
 
@@ -194,7 +194,7 @@ hljs.initHighlightingOnLoad();
 <li>Reproduce some of the results to show that we are working on the same data and analysis workflow</li>
 <li>Remove the use of ComBat and perform an similar analysis with alternative established tools</li>
 <li>Estimate the error introduced by ComBat and the consequences for the conclusion of the study</li>
-<li>Perform a few more sanity checks to substantiate that the difference in results for the two above analysis is mainly due to error introduced by ComBat</li>
+<li>Perform a few more sanity checks to substantiate that the difference in results for the two above analysis is mainly introduced by ComBat</li>
 </ul>
 
 <h3>Getting the data</h3>
@@ -203,7 +203,7 @@ hljs.initHighlightingOnLoad();
 lapply(includelibs, require, character.only = T)
 </code></pre>
 
-<p>The important sample information is described in Table S1 from Towfic et al. the its usage in ComBat is described briefly in the methods;</p>
+<p>The important sample information is described in Table S1 from Towfic et al. and its usage in ComBat is described briefly in the methods;</p>
 
 <blockquote>
 <p>Each microarrays chip designation was supplied a batch label; there were 18 batches in all. The labels for the treatments (i.e. drug product, reference standard) were added as covariates.<cite> Towfic et al.</p>
@@ -216,7 +216,7 @@ Communication with the corresponding author yielded this explanation</p>
 <p>..and the only thing we used as a covariate was the unique treatment names themselves (e.g. ³Medium² or ³RS&quot;).</p>
 </blockquote>
 
-<p>Based on these descriptions and the annotation for the GEO deposit, we compiled a more complete sample annotation file.</p>
+<p>Based on these descriptions and the annotation for the GEO deposit, we compiled a more complete sample annotation file (sampleannotation.csv).</p>
 
 <pre><code class="r">sampleannotation = read.table(&quot;data/sampleannotation.csv&quot;, sep = &quot;\t&quot;, header = TRUE, 
     stringsAsFactors = FALSE)
@@ -235,7 +235,16 @@ head(sampleannotation)
 ## MBP        6   MBP       MBP 4634633002    F    other    GSM996658
 </code></pre>
 
-<p>The &ldquo;covariate&rdquo;-coloumn is made based on the &ldquo;code&rdquo;-coloumn, but might not match  to what were actually used. The last two coloumns are from the GEO deposit and reveal that 3 of the samples do not have data and are taken out.</p>
+<p>The &ldquo;covariate&rdquo;-coloumn is made based on the &ldquo;code&rdquo;-coloumn, but might not match  to what were actually used for all samples. The last two coloumns are from the GEO deposit and reveal that 3 of the samples do not have data and are taken out.</p>
+
+<p>The nameing convention seeme to differ slightly between the Table S1 and the text in Towfic et al. This is our interpretation of covariate labels and its corresponding name in the text.</p>
+
+<ul>
+<li><strong>DP</strong> refferd to as GA (but not GA as in table S1)</li>
+<li><strong>N</strong> refferd to as &ldquo;generic&rdquo;</li>
+<li><strong>M</strong> reffered to as &ldquo;medium&rdquo;</li>
+<li><strong>RS</strong> reffered to as &ldquo;reference standard&rdquo;&ldquo;</li>
+</ul>
 
 <pre><code class="r"># take out 3 samples that are not assign to a geoaccession. Failed QC?
 sampleannotation = sampleannotation[!is.na(sampleannotation$geoaccession), ]
@@ -243,8 +252,7 @@ sampleannotation = sampleannotation[!is.na(sampleannotation$geoaccession), ]
 
 <p>The batch/covariate design shows many batches and covariate groups.</p>
 
-<pre><code class="r"># the batch/covariate design
-table(sampleannotation[, c(&quot;chip&quot;, &quot;covariate&quot;)])
+<pre><code class="r">table(sampleannotation[, c(&quot;chip&quot;, &quot;covariate&quot;)])
 </code></pre>
 
 <pre><code>##             covariate
@@ -269,7 +277,7 @@ table(sampleannotation[, c(&quot;chip&quot;, &quot;covariate&quot;)])
 ##   5216898024 0 0  0  1 1  0 1       0   0 0  1 1  1
 </code></pre>
 
-<p>A look at the most interesting groups, &ldquo;DP&rdquo;(drug product) and &ldquo;N&rdquo;(generic) reveals a lack of balance.</p>
+<p>A look at the most interesting groups, &quot;DP&rdquo;(drug product) and &ldquo;N&rdquo;(generic) reveals a lack of balance.</p>
 
 <pre><code class="r">table(sampleannotation[sampleannotation$covariate %in% c(&quot;DP&quot;, &quot;N&quot;), c(&quot;chip&quot;, 
     &quot;covariate&quot;)])
@@ -300,7 +308,17 @@ table(sampleannotation[, c(&quot;chip&quot;, &quot;covariate&quot;)])
 <p>The microarray data have been deposited in the Gene Expression Omnibus, under accession number <a href="http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE40566">GSE40566</a></p>
 </blockquote>
 
-<p>The processed data from the above GEO deposit was deposited for another publication which did not processes the data as described in Towfic et al. (personal communication). The raw data linked to as <a href="http://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE40566&amp;format=file">GSE40566_RAW.tar</a> and <a href="http://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE40566&amp;format=file&amp;file=GSE40566%5Fnon%5Fnormalized%2Etxt%2Egz">GSE40566_non_normalized.txt.gz</a> were thus used, although it is not confirmed that this is the version of the data actually used in Towfic et al.</p>
+<p>The processed data from the above GEO deposit was deposited for another publication which did not processes the data as described in Towfic et al. (personal communication). The files linked to as <a href="http://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE40566&amp;format=file">GSE40566_RAW.tar</a> and <a href="http://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE40566&amp;format=file&amp;file=GSE40566%5Fnon%5Fnormalized%2Etxt%2Egz">GSE40566_non_normalized.txt.gz</a> were thus used, although it is not confirmed that this is the version of the data actually used in Towfic et al.</p>
+
+<p>A recap of the important input files used in this report:</p>
+
+<ul>
+<li><strong>sampleannotation.csv</strong> holds the important sample/batch/covariate assignment. Compiled based on inforamtion in Towfic et al, the geo deposit and personal communication.</li>
+<li><strong>GSE40566_non_normalized.txt</strong> the measurments in a sample vs probe matrix. From the <a href="http://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE40566&amp;format=file&amp;file=GSE40566%5Fnon%5Fnormalized%2Etxt%2Egz">GEO deposit</a>.</li>
+<li><strong>GPL6887_MouseWG-6_V2_0_R3_11278593_A.txt</strong> the probe annotation needed for the datarow to probe to gene mathing. From the GEO deposit inside the <a href="http://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE40566&amp;format=file">GSE40566_RAW.tar</a>.</li>
+</ul>
+
+<p>Reading the data.</p>
 
 <pre><code class="r"># the output from Illumina software.
 rawdata = read.table(&quot;not_in_github/GSE40566_non_normalized.txt&quot;, sep = &quot;\t&quot;, 
@@ -312,7 +330,7 @@ rawannotation = read.table(&quot;not_in_github/GPL6887_MouseWG-6_V2_0_R3_1127859
     quote = &quot;&quot;, fill = TRUE)
 </code></pre>
 
-<p>Then some formatting is needed to match the probe information to the measurments and the measurments to the sample information.</p>
+<p>Some formatting is needed to match the probe information to the measurments and the measurments to the sample information.</p>
 
 <pre><code class="r"># annotation file has two separate tables, one for experimental and one at
 # the end for controls.  splitting and fixing the tables:
@@ -350,9 +368,9 @@ dimnames(datamatrix_raw)[[1]] = probeannotation$Probe_Id
 datamatrix_raw = datamatrix_raw[, match(sampleannotation$code, dimnames(datamatrix_raw)[[2]])]
 </code></pre>
 
-<p>Several tables with results are presented in the Supporting Information of in Towfic et al. We are aiming to reproduce these. Unfortunatly these were only presented in a pdf-format not easely parsed by a computer. We had to resort to a ad-hoc method of cut-and-paste from pdf into text files which were somewhat polluted by pdf-formatting code. For some tables about 10% of the rows will be lost, but the rest will suffice.</p>
+<p>Several tables with results are presented in the Supporting Information in Towfic et al. We are aiming to reproduce these. Unfortunatly these were only presented in a pdf-format not easely parsed by a computer. We had to resort to a ad-hoc method of cut-and-paste from pdf into text files which were somewhat polluted by pdf-formatting code. For some tables about 10% of the rows will be lost, but the rest will suffice for our purpose.</p>
 
-<pre><code class="r">
+<pre><code class="r"># Table S2
 table_s2 = read.table(&quot;data/table_s2.csv&quot;, sep = &quot;\t&quot;, header = TRUE, stringsAsFactors = FALSE, 
     fill = TRUE)
 table_s2 = as.matrix(table_s2)
@@ -377,12 +395,13 @@ for (n in 3:6) {
     table_s2[, n] = as.numeric(table_s2[, n])
 }
 
-
+# Table S3
 table_s3 = read.table(&quot;data/table_s3.csv&quot;, sep = &quot;\t&quot;, header = TRUE, stringsAsFactors = FALSE, 
     fill = TRUE)
 # one Probe, (&#39;1770446&#39; or &#39;ILM_1770446&#39;) was not found in the data and was
 # thus removed from this textfile
 
+# Table S4
 table_s4 = read.table(&quot;data/table_s4.csv&quot;, sep = &quot;\t&quot;, header = TRUE, stringsAsFactors = FALSE, 
     fill = TRUE)
 # not able to copy-paste the pdf whitout a lot of gibberish clutter the
@@ -402,6 +421,7 @@ a = is.na(as.numeric(table_s4$Var_generic_vs_Var_GA))
 <pre><code class="r">table_s4 = table_s4[!a, ]
 table_s4$Var_generic_vs_Var_GA = as.numeric(table_s4$Var_generic_vs_Var_GA)
 
+# Table S5
 table_s5 = read.table(&quot;data/table_s5.csv&quot;, sep = &quot;\t&quot;, header = TRUE, stringsAsFactors = FALSE, 
     fill = TRUE)
 tmp = as.matrix(table_s5)
@@ -426,16 +446,24 @@ table_s5$Fold_Change = as.numeric(table_s5$Fold_Change)
 
 <h3>Reproduce the original results</h3>
 
-<pre><code class="r">set.seed(100)
-datamatrices = list()
+<blockquote>
+<p>Starting with background-corrected bead-level signals, we quantile normalized the extracted data for all samples across all 46,547 probes via the preprocessCore package in R.</p>
+</blockquote>
+
+<pre><code class="r">datamatrices = list()
 datamatrices[[&quot;real_raw&quot;]] = datamatrix_raw  #[1:5000,]
 
 # used in paper, but seems to do the same as the limma version. Except it
 # loses dimnames
 datamatrices[[&quot;real_qnorm&quot;]] = normalize.quantiles(datamatrices[[&quot;real_raw&quot;]])
 dimnames(datamatrices[[&quot;real_qnorm&quot;]]) = dimnames(datamatrices[[&quot;real_raw&quot;]])
+</code></pre>
 
-mod = model.matrix(~as.factor(sampleannotation$covariate))
+<blockquote>
+<p>We then corrected for batch variation with ComBat [17] as implemented in the SVA package of R [18]. Each microarrays chip designation was supplied a batch label; there were 18 batches in all. The labels for the treatments (i.e. drug product, reference standard) were added as covariates. </p>
+</blockquote>
+
+<pre><code class="r">mod = model.matrix(~as.factor(sampleannotation$covariate))
 mod0 = model.matrix(~1, data = sampleannotation)
 
 datamatrices[[&quot;real_combat_covariates&quot;]] = as.matrix(ComBat(dat = datamatrices[[&quot;real_qnorm&quot;]], 
@@ -450,15 +478,6 @@ datamatrices[[&quot;real_combat_covariates&quot;]] = as.matrix(ComBat(dat = data
 ## Finding parametric adjustments
 ## Adjusting the Data
 </code></pre>
-
-<p>The nameing convention seeme to differ slightly between the Table S1 and the text. This is the covariate labels with its corresponging name in the text.</p>
-
-<ul>
-<li><strong>DP</strong> refferd to as GA (but not GA as in table S1)</li>
-<li><strong>N</strong> refferd to as &ldquo;generic&rdquo;</li>
-<li><strong>M</strong> reffered to as &ldquo;medium&rdquo;</li>
-<li><strong>RS</strong> reffered to as &ldquo;reference standard&rdquo;&ldquo;</li>
-</ul>
 
 <p>First we will try to reproduce Table S2.</p>
 
@@ -527,25 +546,19 @@ plot(table_s2$AVG_generic, meanN[table_s2$ID], pch=&quot;.&quot;)
 
 <p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAkAAAAJACAMAAABSRCkEAAAAtFBMVEX9/v0AAAAAADkAAGUAOY8AZrU5AAA5ADk5AGU5OTk5OWU5OY85ZmU5ZrU5j9plAABlADllAGVlOWVlOY9lZjllZmVlZrVlj49lj7Vlj9pltf2POQCPOTmPOWWPZgCPZo+Pj2WPj7WPtdqPtf2P29qP2/21ZgC1Zjm1ZmW1jzm1j4+124+1/rW1/tq1/v3ajznaj2XatWXa24/a29ra/rXa/tra/v39tWX924/9/rX9/tr9/v0SD7ipAAAAPHRSTlP//////////////////////////////////////////////////////////////////////////////wC7iOunAAAACXBIWXMAAAsSAAALEgHS3X78AAAdXklEQVR4nO2dD3/btrWGx9Rym3pW4tt2vZWT3W2p6K5LxK1LTFr8/t/rEiQlKxYFgDj4cw74PuvPcxwaAt88BAESIP/UAkDgT6krAGQDgQAJCARIQCBAAgIBEhAIkIBAgAQEAiQgECABgQAJCARIQCBAAgIBEhAIkIBAgAQEAiQgECABgQAJCARIQCBAAgIBEhAIkIBAgAQEAiQgECABgQAJCARIQCBAAgIBEhAIkIBAgAQEAiQgECABgQAJCARIQCBAAgIBEhAIkIBAgAQEAiQgECABgQAJCARIQCBAAgIBEhAIkIBAgAQEAiTmC1Rkib9EU+9JGC7uroNAlHS54lMgf0XxAQIZgEB6IJABCKQHAhmAQHogkAEIpIcgULmxLksex9EFBJrGnI9OoKc3/Qjum91kmfIpJr/1WGo+OLZA1SrzFugIBNLjegqrVxAoYVF8cO4D1Vd/hUDJiuKDeye6uYZAyYrig59hvOm2iGAgkB5cBzLgvlNL7yMueRh/gtNOIZ/W0AI1N49zyhKM207hMofpFFa9TEdblgimq++4U7jMgT7QgOtO4TIHBOpx3qnFX+aAQD1edmqRlzkgUA+uAw1cqjwEMoBhvB4IZMBtp3CZY0kCaevtuFMZXuaYBgIZQB9IX20IZAAC6Vm6QMY6QyA9SxfICATSA4EMLFogixpDIAOLFsgCCGRgwQJZ1XexAhWW1V2sQJa1XaxAtixVINvKQiADSxXIFghkAALpgUAGIJAeCGRggQLNqicEMgCB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" alt="plot of chunk reproduced_tables2"/> </p>
 
+<p>The numbers in Table S2 is almost reproduced.</p>
+
 <p><strong>Table S3</strong></p>
 
-<pre><code class="r"># Table S3. The highly variable probes that were significant by F-test in
-# either GA or generic (see methods section) and are depicted in Figure 1A.
-# MEthods: In order to identify probes with variability induced specifically
-# by activation (as opposed to experimental noise), we sought to identify
-# probes that were significantly more variable when activated with either GA
-# or generic than medium. Using an F-test, we compared GA against Medium for
-# each probe and compared generic against Medium. We then took the set of
-# probes where either treatment comes up to be more variable than medium
-# (union, passes in at least at least one). For those set of probes only, we
-# compared the variability of GA across 34 samples representing 30 batches,
-# to the variability of generic across 11 samples representing 5 batches,
-# utilizing an F-test to measure significance of the differences between the
-# probes.
+<blockquote>
+<p>The highly variable probes that were significant by F-test in either GA or generic (see methods section) and are depicted in Figure 1A.<cite> Figure text, Towfic et al.</p>
 
-# do a f-test between DP and medium, and N and medium. And see what is
-# &#39;significant&#39; (significance cut-off not noted in the text)?
-pvalsN = apply(datamatrices[[&quot;real_combat_covariates&quot;]], 1, function(x) {
+<p>In order to identify probes with variability induced specifically by activation (as opposed to experimental noise), we sought to identify probes that were significantly more variable when activated with either GA or generic than medium. Using an F-test, we compared GA against Medium for each probe and compared generic against Medium. We then took the set of probes where either treatment comes up to be more variable than medium (union, passes in at least at least one). For those set of probes only, we compared the variability of GA across 34 samples representing 30 batches, to the variability of generic across 11 samples representing 5 batches, utilizing an F-test to measure significance of the differences between the probes.<cite> Methods, Towfic et al.</p>
+</blockquote>
+
+<p>There is not description of what was used as a significance threshold here, but for the Identification of differentially expressed genes (TAble S5) a 0.05 FDR cut-off.</p>
+
+<pre><code class="r">pvalsN = apply(datamatrices[[&quot;real_combat_covariates&quot;]], 1, function(x) {
     var.test(x[sampleannotation$covariate == &quot;N&quot;], x[sampleannotation$covariate == 
         &quot;M&quot;], alternative = &quot;greater&quot;)$p.value
 })
@@ -575,18 +588,27 @@ print(table(padjustedN &lt; 0.05))
 # expressed genes tests.
 </code></pre>
 
-<pre><code class="r"># look at the pvalues for the probes found in table_s3
-thiscolors = c(&quot;black&quot;, &quot;brown&quot;, &quot;red&quot;, &quot;blue&quot;)
-plot(density(pvalsN[table_s3$Probe[table_s3$Type==&quot;generic&quot;]]), col=thiscolors[3], main=&quot;P-values for F-test, N or DP vs. Medium&quot;)
-lines(density(pvalsN), col=thiscolors[1])
-lines(density(pvalsDP), col=thiscolors[2])
-lines(density(pvalsDP[table_s3$Probe[table_s3$Type==&quot;GA&quot;]]), col=thiscolors[4])
-legend(&quot;topright&quot;, legend=c(&quot;All probes, N vs. M&quot;, &quot;All probes, DP vs. M&quot;, &quot;Table S3 probes, N vs. M&quot;, &quot;Table S3 probes, DP vs. M&quot;), text.col=thiscolors)
-# The PRobes from table_s3 are at least enriched for low p-values.
-# But table_s3 is not fully reproduced. More detailed explanation is needed
+<p>We are not able to reproduce this list. An alternative is to inspect the p-values for the probes in the list and see how they compare to the overall p-values.</p>
+
+<pre><code class="r">par(mfrow=c(2, 1))
+thiscolors = c(&quot;red&quot;, &quot;blue&quot;)
+hist( pvalsN[table_s3$Probe[table_s3$Type==&quot;generic&quot;]], 
+      breaks=100, border=&quot;red&quot;, 
+      main=&quot;P-values for F-test, Table S3 probes&quot;,
+      xlab=&quot;P-values&quot;)
+hist(pvalsDP[table_s3$Probe[table_s3$Type==&quot;GA&quot;]], 
+     breaks=100, border=&quot;blue&quot;, add=T)
+legend(&quot;topright&quot;, legend=c(&quot;N vs. M&quot;, &quot;DP vs. M&quot;), text.col=c(&quot;red&quot;, &quot;blue&quot;))
+hist( pvalsN, 
+      breaks=100, border=&quot;red&quot;, 
+      main=&quot;All probes&quot;, xlab=&quot;P-values&quot;)
+hist(pvalsDP, 
+     breaks=100, border=&quot;blue&quot;, add=T)
 </code></pre>
 
-<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAkAAAAJACAMAAABSRCkEAAACFlBMVEX9/v0AAAAAADkAAGUAAP4AAP8AOTkAOWUAOY8AOf4AZo8AZrUAZv45AAA5ADk5AGU5AP45AP85OQA5OWU5OY85Of45ZmU5Zo85ZrU5Zv45j485j7U5j9o5j/1lAABlADllAGVlAP5lAP9lOQBlOTllOY9lOf9lZgBlZjllZmVlZrVlZv5lZv9lj49ltbVltdpltf2POQCPOTmPOWWPOf6POf+PZgCPZo+PZv6PjzmPj2WPj7WPj/6Pj/+PtY+Ptf6P27WP29qP2/2lKiqlKlOlKnmlVJyleb20Kiq0KlO0Knm0VHm0VJy0eZy0eb20nd61ZgC1Zjm1ZmW1Zv61Zv+1tWW1tf6124+12/61/rW1/tq1/v2+vr7DKirDKlPDKnnDVCrDVFPDVJzDeVPDeXnDeb3Dvv3SVCrSVFPSVHnSeZzSnVPSnXnSnb3SvpzS3r3S3v3ajznaj2Xaj/7aj//a24/a/rXa/tra/v3a/v7heSrheVPheXnhvnnh3pzh/t7h/v3vnVPvnXnv/r3v/t7v/v39jzn9j2X9tWX9tf79vnn924/92/793pz9/rX9/r39/tr9/t79/v39/v7+AAD+ADn+AGX+OQD+OTn+OWX+OY/+ZgD+Zjn+ZmX+Zo/+ZrX+jzn+j2X+j7X+tWX+tY/+tf3+24/+2/3+/tr+/v3/AAD/ADn/AGX/OWX/OY//Zo//ZrX/j9pzD8fwAAAAsnRSTlP//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////wD/////////////////////////////////////////xej1eQAAAAlwSFlzAAALEgAACxIB0t1+/AAAH8lJREFUeJztnY2fJEV5x509Jx4u60k8Ek2W5YSgEl8ye+TyQgzqngoaEtbkDJJV86I5MS+ESQDXMzEQAxlujmGuQSA5zJtB4qDk+A9Tb/3+Vt1Pv9TL7/u52+np7qquqfrOU9U90zVvCwAg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" alt="plot of chunk reproduced_tables3"/> </p>
+<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAkAAAAJACAMAAABSRCkEAAABMlBMVEX9/v0AAAAAADkAAGUAAP4AAP8AOTkAOWUAOY8AOf4AZrUAZv45AAA5ADk5AGU5AP45AP85OWU5OY85Of45ZrU5Zv45j485j9o5j/1lAABlADllAGVlAP5lAP9lOQBlOY9lOf9lZjllZmVlZv5lZv9ltbVltf2POQCPOTmPOWWPOf6POf+PZgCPZv6Pj2WPj/6PtY+Ptf6P29qP2/21ZgC1Zv+1tWW1tf6124+12/61/v3ajznaj/7aj//a24/a/rXa/tra/v3a/v79jzn9j2X9tWX9tf7924/92/79/rX9/tr9/v39/v7+ADn+AGX+OTn+OWX+OY/+ZgD+Zjn+ZmX+Zo/+ZrX+j2X+tWX+tY/+tf3+24/+2/3+/tr+/v3/AAD/ADn/AGX/OY//Zo//ZrX/j9oOa/lNAAAAZnRSTlP///////////////////////////////////////////////////////////////////////////////////////////////////8A///////////////////////////////////W09G3AAAACXBIWXMAAAsSAAALEgHS3X78AAAaj0lEQVR4nO2dDX/kxl2AKx+mh+u81KF1nEBKKdgHKZDGm0JvCRc3bPZ2VQikvJQ0xElIvv9XQDOj19WMpNn/aHe0ep7f3d7fWmk0Jz2eF0mj+V4KIOB7x84ATBsEAhEIBCIQCEQgEIhAIBCBQCACgUAEAoEIBAIRCAQiEAhEIBCIQCAQgUAgAoFABAKBCAQCEQgEIhAIRCAQiEAgEIFAIAKBQAQCgYjJCbS5SRS3zq+fPO9JYX2ZnN23F2/vkkbKC+suakuLDS7Kn/NdW/Kgcv30wfx7kXZSJjMNpiqQTQHzde/hX9jt2xHIvlZ9qYdAJtMX+SbdBiHQuGxu1G/yIrnWPy302VCfK2OVOnn6FJj1lrkRWamTmPOiz2H2lfrmWv149lNjY+PE6bUudrcvlpasL9VO8l1nCfxSJ20EWtZKM7WeWqr+Nduk+erZmkUWyhzlydhyHx8TF2hlTtjZvfkdN6epEmihi4jrtPg2LQVaJLUyIf+iLdDO9h9ZBSoSz0skk4dy03y9quRa5QvL1W050nmy5D4+JihQvQrLfnvvjUWpqToaAunzq34qfus1qhpaX+rS6uw+O125EfmJu2istbv9TsVWLje71SdbyZxvUTqp0zZxoX6ar57cmizUc2SSsec+NiYqUHawVbn+9GGZHW1zVtUXOwKtklw2vVFRwKjVV1qUpTp7RWuqFMgkbNba3d4ukNm10SVbQ+Wh3DQtdlrVofV/s/ybLNRylCdjz31sTFCg/NfRnOfsxxeqxlA/uQUyX+dn0ylQfo4sApXb2wQqdt0pkKnG9G7zNIYL1Mh9bExXoJzF2d+qSkGVROvLQqDsFC2Tqr2ar5mf/J0qrCVQWltrd3ubQMWu21VYyTIXx+TQ7LFWhakFjiqslfvYmLxA+VUd8+tqBMpbn2UzVJmUVLWAPhVVk9UpUNmIrm2vltZ66focF7u2NaJrpWWxfbGw1ojWWXA1ondyHxuTFyjvyaujfb001Yduk/xl3lsz50udg8IU87tcdePtAmVb5Oewvr1a+mJHoGLXO934RVLrORXbKzvyheXqRRba3Xhb7mNjcgJFwPoqRKdoYhcMXSCQN5u3ghQGCAQiEAgAgUAIAoEIBAIRCAQiEAhEIBCIQCAQgUAgAoFABAKBCAQCEQgEIhAIRCAQiEAgEIFAIAKBQAQCgQgEAhEIdJIkAeneEwKdJD1nPWBSCHSSIBCIQCAQEbdA7ubVo2aPJCEscQvkTvqx/ICjgkAgAoFABAKBCAQCEQgEIqxnff34ufr8+kvrJuvHb7PPz1rfItAccQik7HAK9NX/penmUwSC1CXQ17/7Nhdo/U2abj/9YvX4WAqz/vq3X6Tr/0AgSJ0CffnZ50agTJ5Mos2/fpl+/G357e8+T//5fxAIUrdAm3/Pq7CPv8v+bP7li/q3v/92+2+/RyBI3QJl1hiB1t/oQujx8asvym//9z83/9VuISHQHHEKtP3UVFLZv9/ohatvqm9/+9/fIRAonALlXbGsDnv8TstTF2j11RcIBAq3QOnHRpG1qrs+072wvFL7+kvzZ0hSFQh0knAlGkQgEIiISSAzW5VtuioEipaIBNremZnyVu2JXxEoWiISaPP288a/nUkjUCRYz/rL188zbovgTfumL1//Qfb5wR8Up5sSaI7YBXotk+I3f3pbBPZpz16+/qOH9Dd/9loogYqJ2mkDTQm3QOnLNx5M8O6t/iEL7j85Py9LnJev/cV9+vJn4QTyySUCRUKHQFnJo4OXr6sS6N1Mljd+/SfP0w9/UK7197fpP/5iTIE6xoWVH3BUOgTKnCkbQ2n64ZvZn0Zt9vK1X/0o/etfUQLNmgElUL7sjQdVCGVG3Vdr/c2vf/YSgWZNh0Cf/NFDTaD03V+8oXtH2eJyrQ/+7s1wAuVtaFsrGoGiZUAvLOfDrDuv5KkL9Mn5fcASaHt3PTiXCBQJPdeBagLptvQHuheW99Jee27+dCVVMaAKc86TjkDREtGVaK+kESgSEAhEIBCIQCAQgUAgAoFAxMkJxMsTD8vpCeT6AkYBgUDENKY6QCBAIJCBQCACgUAEAoEII9Dm5mKPbREIyhJolSRnjsd+nCAQ1Kuw7V2S3LbXWF8mF0vpuDAEOlUKgTJNshLIMn55++w+XWYV3PpKMjIVgU6Vog3UHrico5xaXjfGxu8xLgyBTpX+sfGUQNBBLtAqa/0s7a3orHK7pg0EDvIqTA+8WL/alqQLBIJcIPMOF8sbXDpBICiqMD3+1FJLdYJAwK0MkIFAIKLshTneQtYFAkF5IdFyD6MXBIJCoPYtjAEgEBRV2ML1CpcuEAjKKuxgbSBGiJ0WB++FURadFggEInKBtnfJ0xeuN5G5QCAo74Vdr68eDnIvDIFOi7Ibnwnk25lHIGiUQEtKIPClagMliac/CAT0wkAIAoGI/ivR68tbVcFZ6jcEgkYJtLTdEFNPuy5uw43KQKDToi6QtRufLVQje3zHhVW3vGpR8wNOgbpAK2sVlhU/q6xoWrVfv9ApUP8HnAKNNpD9qbKF/s7y+g4EgtF6YQg0ExAIRDSqMM9HyhAIihJIvT7BfHiAQNB4qD7k3XgEmgnl3fiUEgj2oH433vdFmwgE9MJABgKBiLEequ++DYZAJ8NYD9VTAs2EsR6qR6CZMNZD9Qg0E8Z6qB6BZgK9MBAx1vuBEGgm5G2gZ74z9SgQCEZ7PxACzQTaQCBioEDWWRAQCLRAnU3ojocVEQhKgSzjBnM2N5k6jRKob1yY8w5Y8ws4BfoF0tPR/RNVGFgZIpAaH2/roCEQGIH2GpOBQJDSjQchCAQiEAhEIBCIQCAQgUAgAoFABAKBiHgE2p1IzPaWRRt+E5AxXVlgIhJo54uhhZZfkUYBGBgEAhEIBCIQCEQgEIhAIBCBQCACgUAEAoGIfoHWl8nZvXXsDwJBv0BqvjD1FmAEAhu9AhlxFhe+84V1f1g4zxgu0O7gszKFnW/dORyH2d1rG1QCZSz/sD0yTFgC7Xycqz/DBXKlkLq26PsmDLMr4frbQJsbPRPmMvjQZgQ6BY7YC0OgUwCBwoJAHiDQ4dOPDgQKCwJ5gECHTz86ECgsCOQBAh0+/ehAoLAgkAcIdPj0oyOsQOfnxf2oRx2nzR/zb/Nl1c2v8vSfnzfujZXJqHUsw8SK1PJkso3P1Rf1nexSc64b+3+5yGEtwWZudgSypbWzbHenOxn3v7nW+R9wrL3fnhSBBSpLgUcTWX88N8uqIqcqP87LH80Pj7UU2h9Vgo0y7LyW1i5ehWKbRg53Eswz3Pi6u/CsftxNxrn2AGoJDl279//tBoEQCIEQqLUFAiGQO4VuEAiB3GsPAIEQyL32ABAIgdxrDwCBEMi99gAQCIHcaw8gNoHWl65pEBConRsE2iUflZGu2pOCI1A7Nwi0SzEebNC4sHMIQc9tulEJLlBHCQQwaFzYPlNBwUyQ9MIAEAhkIBCICCtQAhES9BTvEligoKmxkwnsBYFOfScIxE5i3gsCnfpOEIidxLwXBDr1nSAQO4l5L1xIBBEIBCIQCEQgEIhAIBCBQCACgUAEAoEIBAIRCAQiwgi0uUnyUT9VFJwqaTVY9nbsnVQjmkbcyfZOTwc58l6y4zXaoJogAqkjvbxoRsGpkt68dZ+uXxnluDfyvxzJ0tpOFrejDbhrHq/lWL/WQQRSo1bXekK6KgpOlfRKHZbFKCe3nv/1D98ZR6Dm4RqLai/rq4fx9hREIJ3Dt+4bUXCaSY+/k+2z90eqwuqH6+ejVWHVXuIvgVQpbPJaRcFpJK2mAR55J8vrsdpA1U7Wl7f6RI+7lzEbphMtgfJpOMfcSRaNJdBBDld9L1l7cTVWK3qKbSD9izsO1U6WekjVKJ7WDtdPxhOo1mYcr1oI1gu7Lnth1+P1woqkx/Onmf+xSqDaThbjVWG14xV9CZRXssr30a8DZTsxhcNIPaTyfzL6daD8cI12habayyoZ72oTV6JBBAKBCAQCEQgEIhAIRCAQiEAgEIFAIAKBQAQCgQgEAhEIBCIQCEQgEIhAIBCBQCACgUAEAoEIBAIRCAQiEMiKmeu8PahnpCFLEwaBrGhRLGOpEGgXBLKiRTHDetS4re2ze/NKmWy5+qo2Imc18/mIEciKFsi8QiaTJ5PohXqljLanEGihx+2p8Z8jjaScBghkxbSBzLjC5bX6k+rBwpVAqn7LFow2ZHgqIJCVoq2zSJKL9dVHWSGkwid1gW4SPd4zU220UZ9TAIGs1BvL22fvXT1sbm6bVVjtjU1jvWNsEiCQlUZva5n157U2r9znddfyiW4DZeYoeRAIdmkIpBvTyyT5/ju3ankW/fht3Qs7K2q242X06CAQiEAgEIFAIAKBQAQCgQgEAhEIBCIQCEQgEIhAIBCBQCACgUAEAoEIBAIRCAQiEAhEIBCIQCAQgUAgAoFABAKBCAQCEQgEIhAIRCAQiEAgEIFAIAKBQAQCgQgEAhEIBCIQCEQgEIhAIBCBQCACgUAEAoEIBAIRCAQiEAhEIBCIQCAQgUAgAoFABALV2N4lavLBzc2T5+pv96qznmKlAoFqrC/1zDsI5AEC1Vgmf66muawLlInySz2h0/bu7KdqfqelmQ7cLNcThS3zyTHVNJnzswqBKjIp/uHyYlcgNXlqZooOnj4s9I8X1fLULLlO9RyYyezmnkOgivXlha6ZdgTSbtya9tH6MiuENjdn9/nys/v1ZeaM2kwH8wOBKpZZTaT+7lRhz/Wkl1kVdq9mib8wK5rli+R2pQugrHLTJRBV2IzJa6WLPQUyU4XPbgZnBCoxc8UnRh5LFabccFRhJYt8rvn5gEAlanJmrYCjEa0LF1cj+umD8W92dRgCFWRKqNJjmVy0u/G6nWxqp3Y3fpF3vpRBs6vBEKgHLhj2gEDdIFAPCNQNAvWAQCACgUAEAoEIBAIRCAQiEAhEIBCIQCAQgUAgAoFABAKBCAQCEQgEIhAIRCAQiEAgEIFAIAKBQAQCgQgEAhEIFBvnmv02rW9eJiFIcAAIFBvn5Uffii0vSm+aAg1NcC8QKDaGC9RaD4FOD//6A4GghuPsVS2VlmCVAW73Oho67c0RaBo8KlpLXQIVH+3vzZLCneZXJY3N7QlagjFa0wgUisf8b5NOgeyWFB9DvvITyJ4XGQgUih6Bmr/+jpPaLl0QaDb0CVT+1LPYXyC7dgg0MUYSqGhZeVuCQMfg0d4UHoK9hdrVlB1aAj26vwoq0F5tbARq8Fh+9K3YEq3RJGksdTVthtZBFoHU3hs2+pnklh2B9qd0wlIRtQ54u8JyCFSe6sY6Xuf70Z1Gb9BT8bVa9gi0P6UT9pbMngI1vtpTIJ+V91Oq43/QQ79A5euTfZOeGocXKC9YTNCujB6Lxe40ghdF4QXa3plXZ69OfiaIhkDN1rSXQD0XfHpLIO1N6VbPys1gv61agQ+9Am3eft7493RpClQEmh6BdhopxWl8tJ9Px+LGpoMsEeriLpN8oAQqEQhUrtO6R9pxqps6SUsOu8MRlED5PFizagOV3bHyKl6a7vRYHAL5BJ0GHDXwgV6YomzxtEugSo6y6im/KinX6Qhagnie3bxldAjJfEAghcObpkBFUG5Rlkl7lEBeKux3tbAMvLXzYbbd+EYva0+BiiXtUmrIuRq7Mtq/uPJhRo3ox5YzewhUtIMcAtlXHlugQL33cQSydOOTAt+dHZdmx8rSCq7LsSNQ6xQNEqgd1NOJoeCxr+yDpASapED1G17NtnNDjo4q7LzYag+B6sFIAgUIfJB04ycpUDtodaMa6zhasLEINLi8KTtx7frO+pD1UCS9sEkL1K6wHAI1vqquMte/Gi5Q4ynoQxQqe1319mG+AqWpsx9ubSnHWQKNEvgwqBGtajFLJ2z6AhWBwwAE6meIQLoDtv7j1lcxCtTxTOp4Au13pS8WXcYXaH31YL0bH6VA+qNxM6txw6FPoKYK9gs5Je2vfIJYdBlboJuz9/9KlUBXk+jG910StHesuuqg0e4/xaLLyALpCdUv0tUEuvHtYsYhUJo6SyD/YO+iKBZd2t0xH06pF9bjzUgC7R0c2xt34MN0BWo/tbOnQKGeOvYNYtFltgKlw3RpXzYcdCCFj1AMCGLRBYEGBOWxGSzQ+MERs9DTMfBh4gK1niRsP5U8SKDxy5uoBOoJfJi4QCpwVE/FbxklkHfgwykIlKaWRyzKwHGf6/jnKoIsIJAKyv93JVDDEsdQm6MHEWQBgVRgEagM4ilvEKjNgQSqWsr2h5q7BIo5iCALVdDol/kwBYH0R/1qYbkYgUYJfJiMQPUgbSxBoNCBDwiEQK3Ah0kK1DGaIoLDP12B6mO3hzJNgRpBdQBi7nNNQaAi8GEfgQ48sHC4QNMKIshCMIE2Nxe+G6bHKoEea6+DQ6BRAh+KEmiVJGf3ntserQQq/7uVQJFdZZ6fQKl+dDW59dn2AALZHxazCDTBIIIsBBRofalKIL8XIR5CoHRgCTTBIIIsBBNoc7PPy1sOKZDfe1UmEUSQhWAC7UdwgdqDAnsu9iDQKIEPuUCrrPWz9G1FhxcotZU3XVcLJ9h2PkmBNm8pd9av+r3GbkSB0rT/mdRpXTY8bYHMW6R832I3okD1sW47Sk3dm5MUyLxFyvc9miOXQOUjKlOup+Yi0F6EFMhxf/SUgwiyMH2B2uNyEOj4gQ9lL2yPd0GHEKj4QKCIAh+KC4le9zByxhGoOWryZJrMJy7QXnM5UQKJggiyEEygdHHtXMM91YFQoI63akRyIBGon6IKc7aBxnvRuMWbE66wTlugDjpmLAwvUBrF8UMgDw461YFjZCACRRb4kAu0vUuevnjLejM14FQH7SGCzSWRHD8E8qC4F3a9vnoY/V6YY1yO/R5qBAcSgfopu/GZQL6deYFA9iCS44dAHtRLoKW1BArYjbf0uWJ99woCDaRqA1mnwwjciC4+ZljenLhAbkLOWIhA9SCCLBxCIEqgsYIIshBMoI4r0cJuvP114DNs8Zy2QIal+4aYlUECpQPuV8zqDsYJCzRGN36m97nmKZBtRh7djb9e7F+Fpa1HfAiOvefwAuXtHNtTZaoRvcjs2XO+MJrMziCCLAQTqANVr62u974bj0DOIIIsHEKgohtPCRQ6iCALwQTKqzBrS8c8L72UtIGGZnxeQQRZCCZQurwoPjxAIFEQQRaCCWQaOIG78TMcKzhbgbZ36hpi4BKIyz/dQQRZCCaQuRvv+6LNQQKlKTcuZiDQXgwWqAwwCYFq+AtEcKoCdTxU7waBREEEWQgm0CgP1VNhdQcRZCGYQKM8VB/BkYg6iCALwQTqeqjeTYdA9N77gwiyEEygjofqO+gSaEA25x5EkIVwAu0FAomCCLIQTKDg7weK5EhEHUSQhWACbZ/5ztSjQCBREEEWggnUNSrDDQKJggiyEEyg/UAgURBBFo4kUPfIVB6hHxhEkIVAAu3XhHaVQNzBGBhEkIWAAlkeee6lLdBMXxWFQMEESimBEGgwCCQKIshCKIE6xmR0YReIm/ADgwiyEEigfXEI1JM7gqPvGYFOIoggCwg05SCCLCDQlIMIsoBAUw4iyAICTTmIIAvRCcSTrB5BBFmIT6ABuSM4+p4R6CSCCLKAQFMOIsjCQQTymSsjkgMwjSCCLBxCIK831UdyAKYRRJCFQwjkNeVlJAdgGkEEWTiEQJRAYwURZOEQAnnNlRHJAZhGEEEWDiKQGwQSBRFkAYGmHESQhYMIRDcegTqgEY1ArcCHsFNeRnIAphFEkIVDCEQJNFYQQRYOIRDd+LGCCLJwEIHcIJAoiCALCDTlIIIsINCUgwiygEBTDiLIwiEE6hj3jECiIIIsHEKgfCooGwgkCiLIwkEESjeuOTQQSBREkIXDCOQEgURBBFlAoCkHEWQBgaYcRJAFBJpyEEEWEGjKQQRZQKApBxFkAYGmHESQBQSachBBFhBoykEEWUCgKQcRZAGBphxEkAUEmnIQQRYQaMpBBFk4iEAMLESgDhjWg0CtwIfAAwth6gQXqKMEAhANLAQQ9cIAEAhkIBCICCtQAlPnyAIFTY2UJ5AyApGyKGUEImVRyghEyqKUEYiURSkjECmLUkYgUhalzIVEEIFAIAKBQAQCgQgEAhEIBCIQCEQgEIhAIBCBQCAijECbmyQf9VNFYajSUyNkb0dJuRq7FDrl7V1y5njJtjDl7GgEHiezfvX5zj4GEUQgdfyXF80oDFV66nXn61fCnY1GTpch1aylvLgNOp6ueTSWQX9TV7mQvmcwiEBq1KoRuIrCUKW3Uv+pRbjzXM/p+ofvBBSoeTRCUqW8vnoIm/ri7D1zMHzPYBCB9H9HT4hQRWFopjdSyttn74eswupH4+dBq7Aq5fAlUGGN7xkMIpAqps1OqygMjfTc077IUl5eB20DVSmvL2/1CQmfcvC2ZimQ7xmcUAm0uQnoTzPPQQU6xNFQrcFV2Fb0MUugQ7SB9K9zQKqUl3o8VDg5a0fjJ2EFqrUIA5f0aSnQUdpAqm4pemHXgXthRXqB/WnmNGgJVEt5EbYKqx2N0Uog3zMY8jqQysI414GylE05EbKzVOZ5nOtA+dEIeparlFdJ2CtMRqA9ziBXokEEAoEIBAIRCAQiEAhEIBCIQCAQgUAgAoFABAKBCAQCEQgEIhAIRCAQiEAgEIFAIAKBQAQCgQgEAhEIBCIQyIqZ67w91CfkkKXTAIGsaFEsA68QaBcEsqJFMYN91MCu7bN783aZbHlt+IsasrOa+XzECGRFC2TeJpPJk0n0Qr1dRttTCLTQA/DUQM6QIyknBwJZMW0gM9pwea3+pHrUbyWQqt+yBYHHF08PBLJStHUWSXKxvvooK4RU+KQu0E2iB4dmqgUeIjotEMhKvbG8ffbe1cPm5rZZhdVe7xTyJWSTA4GsNHpby6w/r7V55T6vu5ZPdBsoM0fJg0CwS0Mg3ZheJsn337lVy7Pox2/rXthZUbMdL6NHB4FABAKBCAQCEQgEIhAIRCAQiEAgEIFAIAKBQAQCgQgEAhEIBCIQCEQgEIhAIBCBQCACgUAEAoGI/wc3BUgVH9SzWgAAAABJRU5ErkJggg==" alt="plot of chunk reproduced_tables3"/> </p>
+
+<p>The probes from Table S3 are at least enriched for low p-values. A more detailed explanation is needed for a better reproducablity.</p>
 
 <p><strong>Table S4</strong></p>
 
@@ -643,7 +665,7 @@ lim =c( min(   c(min(x), min(y))  ), max( c(max(x), max(y)) ))
 plot(x, y , ylim=lim, xlim=lim, pch=&quot;.&quot;, xlab=&quot;Table_S5&quot;, ylab=&quot;reproduced&quot;, main=&quot;FC comparison&quot;) # Not a perfect match. And the table_s5 numbers seems offset.
 </code></pre>
 
-<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAkAAAAJACAMAAABSRCkEAAAAeFBMVEX9/v0AAAAAADkAAGUAOWUAOY8AZo8AZrU5AAA5ADk5AGU5OY85ZrU5j9plAABlADllAGVlOQBlZjllZmVltf2POQCPOTmPOWWPtY+P27WP29qP2/21ZgC1Zjm1tWW1/v3ajzna/rXa/v39tWX924/9/rX9/tr9/v3SN3k7AAAAKHRSTlP///////////////////////////////////////////////////8AvqouGAAAAAlwSFlzAAALEgAACxIB0t1+/AAADX5JREFUeJzt3Qtb29YBx+GKjMFKQ7INN1thheLb9/+GsyTfiA3Y/gusy/s+T2tuPlHwL0dHBku/zCHwy7k3gG4TEBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREZbkCzUVG5m8+nt4vbr6cPNb398tjchnWLgO7m4/qNq3NvUScNOaDltLEoaTH7PBUX96t3i+ozT/W0NC7+Plp84KlMbXGfP+vPltEt7jAbXfyruPhvOQNNrl/eb/O1vSagxSN/+Vy+e7f8cDkbLT71sJyWlvNT9cHlrHX5XO30FrfVBy7/WgS0+sj6fsuvvTrjX/EzDDmgdSHby5/JdRXP3eR6McFMby/ux4twFrPLXfl2NVktUqlaK1c+iw9c1W/VGZb3X96v+tpxUX+0vwT0U0Cr98bV3PFU3JVv1K2UUZSz1lP5JeWMU3+wDqiagRafXd+v+tT0VkB99coubLzc6fwUULm32gqoXPC8DKhaAxXlhLW8X/W1AuqvdUCLuWNrEV3twqpE1ruw7YCWu7ByEiq/ciug0vauT0A9tw7o5WH8nkX0i4DqpfK4+HkGWs1JW4toAfXaJqCfnkh8KOrJaH0Y/2IX9md1qFV+0dfVQmezC9u+n4DYsRUdNQEdQ0A7BHQMAe0QEBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQEReTeg6ffH6neG+/67vZzmkIDKhuaT3z5jc+iaQwKa3DzXMxH87P2Abi/++FHOQDf2Yew6YBFdnUBgvOe3yQuGIA7oVe8MTS8IiEhTAW0tog+c3OgFMxARAREREBEBEUkDqs8+Wuw7Ya2AhiCegWaj187hLqAhyHdh02/3Jw1NL1gDEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARARGJA5pcF6Uvj8cOTS+kAc1Gd9Xt+PL5yKHphTSg6ffHF7eHD00vmIGIxGug6a010JA5CiMiICJNBbS1iC5WTt8qOsMMRERARAREREBE4meib5cr5t0nggQ0BPEMNBt9PW1oeiHfhU2/3Z80NL1gDUREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARNKApt8f59Pborh8PnZoeqGBgMqG5pPfjh2aXmggoMnNcz0THTc0vRAHdHvxx49yBrrZ2YcJaAjyRfRsVFzNx192JiABDYKjMCICItJUQFuL6GLl9K2iM8xARAREJA5ocl3trhyFDVQa0Gx0V92Od3+WIaAhaOJnYdu3hw9NL5iBiMRroPJH8dZAw+UojIiAiAiIiICICIgDFD/d7n7mFQLibQIiIiAiAiIiICICYr8DHz4BEREQEQERERAvHflqGgGx16EdCYi3vfMwCoif2IXxiQTEjmPW0QLipSMfNgHxUnHcIycgVor5CQ+agKhV+ZQn5XEUxgmKKp/NO0fc7y0C4m0CYjn9rN46+q5vEdAgFKvVz/GPmYBYzUAnndVSQNQzj4A43eqsunZhHK2od1+nLYEExCqg087sfUBAy3OQ7T0LWTA07VAsj8FOfLgOm4Eevi7+93TV6NCc3zqe0x+rgwKqT8G650SsydC0w2cENBtVM9Cey1oGQ9MCxfrKJvV7p4zwpuUubDZa/BFXzQ5NC2wujHPqo+UobMjyfgQ0ZE1cmOvgXdjlX9/uGx2as8vnn8MX0ZOb5z1XM0iG5uyauDLgoYfxi4AcxvdNE1eWPGIGchjfN01cmfSIw/gj+xFQ2zVyZVtHYQNWL6A/YRf2IUNzbssJ6DMCGhd386cLh/H90si12Q87CqueApr86iisXz4toPq6lp4H6ps8n0N3YdXvlB35+2QCar3oKej1GG+yiO6zz5uBPmJozq6JR+iwRfSrV2YOhqYXjpiBnr42OjS9cERAfpjKriMCGtuFseOYNdBdo0PTC47CiMQBTa5fO0IT0BCkL22uf8qx9+ccAhqC9KXNq0OzPYdoAhqC9KXNZqCBi1/a/Pqz1AIaAi9tJuIwnkhTAW0tkJp4wSxd4WU9RJwfiEh8hjLPRA9bOgN5Hmjg0jWQZ6IHLj0KMwMN3BFroP08Ez1sh62Bfj/yVc2HDE0veFUGET/KICIgIn4aT+SYJxKvGh36zbuKryvaebEVP8rvjMN2YdXk82kzUCGg7jjmMP7IA3m7sCFo41GY30brEAERaeHFVgproA5p28VW1pcQPuXOfL72XWwluoYwn62FF1vRT5e07VUZXhPUMe07ChNQp8S/kXjy0HvvUpiBOqZ9v5EooE5p2W8kmoC6pk1roOriVfVF0II/lk/VloCqL162Y/7pkLYEtE6oKij4U/lc7QloXl9+SDzd0qqAVjMQ3dGigMw/XdSegIrlIlpDndKSgBx9dVUrAtocgEmoa1oR0Hyuna5qT0B0UjsC8uRhZ7UjIDrr3AEVe96iQ84d0Nz6udvOFpCppx/OPQOpp+POHZCCOu7sASmo284fEJ3WgoCE1mUtCIguExARAREREJEzBSSuvjhPQPrpDbswIgIiIiAiAiJyjoCU1SNmICICIiIgIgIiIiAiaUDlKaTLk7juOY29gIaggYCq05BPfnt/aEX1UAMBTW6e957MXi9DEAd0e/HHj3IGutnZhwloCPJF9GxUXM3He85iL6AhcBRGREBEmgrIInqgzEBEPiAgl2wakjigyfVr1xIT0BCkAc1Gd9XtnovKC2gImvhZ2Pbt4UPTC2YgIvEa6PXrqQpoCBzGExEQkWYCevp6/ND0goCICIiINRARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERiQOaXBelL4/HDk0vpAHNRnfV7fjy+cih6YU0oOn3xxe3hw9NL5iBiMRroOmtNdCQOQojIiAiTQVkET1QZiAiHxBQsXLSBtEtZiAiAiISPxN9u9xf7T4RJKAhiGeg2ejraUPTC/kubPrt/qSh6QVrICICItJMQE/71kECGgIBEREQEWsgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIvKRATEEHxdQsxqfzwz4GQMKyIDRgAIyYDSggAwYDSggA0YDCsiA0YACMmA0YHsCopMERERARAREREBEBEREQEQERERARAREpB0BTX59rG6nt8Xlcz7cZpinoii+PDY2XDu3r9Twd3Az4Htb2IqAxstNnI3u5k9X8XBbwzzcxaNtDdfO7Ss1/B3cDPjuFrYhoIeL/9S5T78/rssPbIaZ/X4fb93WcO3cvnnz38HNgO9uYRsCWs+Xk5vn+fRb/D3dDLOY0Isi/Ue+Ga6d21eP2eh3cDPgu1vYqoDGl4389TfDTP5xn/8r3wzXzu2rNPsd3Az47haeOaCHoriaN/nvpxzwp2HSdcYHzkCVRtZBHzUDVd7awlbNQI2vMSrpA/SBa6BKkwE1tQbqaECz0ddmjnJWw5Qz+uxH+P3cDNfO7as0+x2cv9gnvrmF7Qmo/K/R51nKAZ+K4iKe0DfDtXP7Sg1/BzcDvreF7QiIzhIQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQHtmI2qqxytfze9flHL7otlyhdtli8gb+wECZ0koH1e1PJKQNPbxcefFpk1dYKEbhLQPnUtk+vqZeEP/y5vlq+Z2Uw11ddMv903dYKEjhLQPqs4qjceLp8XN9Vb26/am43qnVxzJ0joJAHts95flS8VLndRD3eLD5VFlR9YGVevuWvuBAmdJKB9lgE9VKvj/92vAirnmpcv0yzrqb5ysFOQgPapd2G39cpnEcdsVAX0fXsdPb4q/78sR0BsqwKqXh2+mGEeruabNdB4fXRfHYUt9mrNnSChkwS0T70LeyqKv/3zrjwKu7hfHYVt7cHKPVr5bmMnSOgkARER0LHKZ4d2FtPDJSAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIvJ/tER++PCL6PMAAAAASUVORK5CYII=" alt="plot of chunk unnamed-chunk-15"/> </p>
+<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAkAAAAJACAMAAABSRCkEAAAAeFBMVEX9/v0AAAAAADkAAGUAOWUAOY8AZo8AZrU5AAA5ADk5AGU5OY85ZrU5j9plAABlADllAGVlOQBlZjllZmVltf2POQCPOTmPOWWPtY+P27WP29qP2/21ZgC1Zjm1tWW1/v3ajzna/rXa/v39tWX924/9/rX9/tr9/v3SN3k7AAAAKHRSTlP///////////////////////////////////////////////////8AvqouGAAAAAlwSFlzAAALEgAACxIB0t1+/AAADX5JREFUeJzt3Qtb29YBx+GKjMFKQ7INN1thheLb9/+GsyTfiA3Y/gusy/s+T2tuPlHwL0dHBku/zCHwy7k3gG4TEBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREZbkCzUVG5m8+nt4vbr6cPNb398tjchnWLgO7m4/qNq3NvUScNOaDltLEoaTH7PBUX96t3i+ozT/W0NC7+Plp84KlMbXGfP+vPltEt7jAbXfyruPhvOQNNrl/eb/O1vSagxSN/+Vy+e7f8cDkbLT71sJyWlvNT9cHlrHX5XO30FrfVBy7/WgS0+sj6fsuvvTrjX/EzDDmgdSHby5/JdRXP3eR6McFMby/ux4twFrPLXfl2NVktUqlaK1c+iw9c1W/VGZb3X96v+tpxUX+0vwT0U0Cr98bV3PFU3JVv1K2UUZSz1lP5JeWMU3+wDqiagRafXd+v+tT0VkB99coubLzc6fwUULm32gqoXPC8DKhaAxXlhLW8X/W1AuqvdUCLuWNrEV3twqpE1ruw7YCWu7ByEiq/ciug0vauT0A9tw7o5WH8nkX0i4DqpfK4+HkGWs1JW4toAfXaJqCfnkh8KOrJaH0Y/2IX9md1qFV+0dfVQmezC9u+n4DYsRUdNQEdQ0A7BHQMAe0QEBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQEReTeg6ffH6neG+/67vZzmkIDKhuaT3z5jc+iaQwKa3DzXMxH87P2Abi/++FHOQDf2Yew6YBFdnUBgvOe3yQuGIA7oVe8MTS8IiEhTAW0tog+c3OgFMxARAREREBEBEUkDqs8+Wuw7Ya2AhiCegWaj187hLqAhyHdh02/3Jw1NL1gDEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARARGJA5pcF6Uvj8cOTS+kAc1Gd9Xt+PL5yKHphTSg6ffHF7eHD00vmIGIxGug6a010JA5CiMiICJNBbS1iC5WTt8qOsMMRERARAREREBE4meib5cr5t0nggQ0BPEMNBt9PW1oeiHfhU2/3Z80NL1gDUREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARNKApt8f59Pborh8PnZoeqGBgMqG5pPfjh2aXmggoMnNcz0THTc0vRAHdHvxx49yBrrZ2YcJaAjyRfRsVFzNx192JiABDYKjMCICItJUQFuL6GLl9K2iM8xARAREJA5ocl3trhyFDVQa0Gx0V92Od3+WIaAhaOJnYdu3hw9NL5iBiMRroPJH8dZAw+UojIiAiAiIiICICIgDFD/d7n7mFQLibQIiIiAiAiIiICICYr8DHz4BEREQEQERERAvHflqGgGx16EdCYi3vfMwCoif2IXxiQTEjmPW0QLipSMfNgHxUnHcIycgVor5CQ+agKhV+ZQn5XEUxgmKKp/NO0fc7y0C4m0CYjn9rN46+q5vEdAgFKvVz/GPmYBYzUAnndVSQNQzj4A43eqsunZhHK2od1+nLYEExCqg087sfUBAy3OQ7T0LWTA07VAsj8FOfLgOm4Eevi7+93TV6NCc3zqe0x+rgwKqT8G650SsydC0w2cENBtVM9Cey1oGQ9MCxfrKJvV7p4zwpuUubDZa/BFXzQ5NC2wujHPqo+UobMjyfgQ0ZE1cmOvgXdjlX9/uGx2as8vnn8MX0ZOb5z1XM0iG5uyauDLgoYfxi4AcxvdNE1eWPGIGchjfN01cmfSIw/gj+xFQ2zVyZVtHYQNWL6A/YRf2IUNzbssJ6DMCGhd386cLh/H90si12Q87CqueApr86iisXz4toPq6lp4H6ps8n0N3YdXvlB35+2QCar3oKej1GG+yiO6zz5uBPmJozq6JR+iwRfSrV2YOhqYXjpiBnr42OjS9cERAfpjKriMCGtuFseOYNdBdo0PTC47CiMQBTa5fO0IT0BCkL22uf8qx9+ccAhqC9KXNq0OzPYdoAhqC9KXNZqCBi1/a/Pqz1AIaAi9tJuIwnkhTAW0tkJp4wSxd4WU9RJwfiEh8hjLPRA9bOgN5Hmjg0jWQZ6IHLj0KMwMN3BFroP08Ez1sh62Bfj/yVc2HDE0veFUGET/KICIgIn4aT+SYJxKvGh36zbuKryvaebEVP8rvjMN2YdXk82kzUCGg7jjmMP7IA3m7sCFo41GY30brEAERaeHFVgproA5p28VW1pcQPuXOfL72XWwluoYwn62FF1vRT5e07VUZXhPUMe07ChNQp8S/kXjy0HvvUpiBOqZ9v5EooE5p2W8kmoC6pk1roOriVfVF0II/lk/VloCqL162Y/7pkLYEtE6oKij4U/lc7QloXl9+SDzd0qqAVjMQ3dGigMw/XdSegIrlIlpDndKSgBx9dVUrAtocgEmoa1oR0Hyuna5qT0B0UjsC8uRhZ7UjIDrr3AEVe96iQ84d0Nz6udvOFpCppx/OPQOpp+POHZCCOu7sASmo284fEJ3WgoCE1mUtCIguExARAREREJEzBSSuvjhPQPrpDbswIgIiIiAiAiJyjoCU1SNmICICIiIgIgIiIiAiaUDlKaTLk7juOY29gIaggYCq05BPfnt/aEX1UAMBTW6e957MXi9DEAd0e/HHj3IGutnZhwloCPJF9GxUXM3He85iL6AhcBRGREBEmgrIInqgzEBEPiAgl2wakjigyfVr1xIT0BCkAc1Gd9XtnovKC2gImvhZ2Pbt4UPTC2YgIvEa6PXrqQpoCBzGExEQkWYCevp6/ND0goCICIiINRARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERiQOaXBelL4/HDk0vpAHNRnfV7fjy+cih6YU0oOn3xxe3hw9NL5iBiMRroOmtNdCQOQojIiAiTQVkET1QZiAiHxBQsXLSBtEtZiAiAiISPxN9u9xf7T4RJKAhiGeg2ejraUPTC/kubPrt/qSh6QVrICICItJMQE/71kECGgIBEREQEWsgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIvKRATEEHxdQsxqfzwz4GQMKyIDRgAIyYDSggAwYDSggA0YDCsiA0YACMmA0YHsCopMERERARAREREBEBEREQEQERERARAREpB0BTX59rG6nt8Xlcz7cZpinoii+PDY2XDu3r9Twd3Az4Htb2IqAxstNnI3u5k9X8XBbwzzcxaNtDdfO7Ss1/B3cDPjuFrYhoIeL/9S5T78/rssPbIaZ/X4fb93WcO3cvnnz38HNgO9uYRsCWs+Xk5vn+fRb/D3dDLOY0Isi/Ue+Ga6d21eP2eh3cDPgu1vYqoDGl4389TfDTP5xn/8r3wzXzu2rNPsd3Az47haeOaCHoriaN/nvpxzwp2HSdcYHzkCVRtZBHzUDVd7awlbNQI2vMSrpA/SBa6BKkwE1tQbqaECz0ddmjnJWw5Qz+uxH+P3cDNfO7as0+x2cv9gnvrmF7Qmo/K/R51nKAZ+K4iKe0DfDtXP7Sg1/BzcDvreF7QiIzhIQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQHtmI2qqxytfze9flHL7otlyhdtli8gb+wECZ0koH1e1PJKQNPbxcefFpk1dYKEbhLQPnUtk+vqZeEP/y5vlq+Z2Uw11ddMv903dYKEjhLQPqs4qjceLp8XN9Vb26/am43qnVxzJ0joJAHts95flS8VLndRD3eLD5VFlR9YGVevuWvuBAmdJKB9lgE9VKvj/92vAirnmpcv0yzrqb5ysFOQgPapd2G39cpnEcdsVAX0fXsdPb4q/78sR0BsqwKqXh2+mGEeruabNdB4fXRfHYUt9mrNnSChkwS0T70LeyqKv/3zrjwKu7hfHYVt7cHKPVr5bmMnSOgkARER0LHKZ4d2FtPDJSAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIvJ/tER++PCL6PMAAAAASUVORK5CYII=" alt="plot of chunk unnamed-chunk-16"/> </p>
 
 <pre><code class="r"># table S2 has the AVG for both DP and N listed
 fc_table_s2 = table_s2$AVG_GA - table_s2$AVG_generic
@@ -654,18 +676,18 @@ lim =c( min(   c(min(x, na.rm=T), min(y, na.rm=T))  ), max( c(max(x, na.rm=T), m
 plot(x, y , ylim=lim, xlim=lim, pch=&quot;.&quot; ,  xlab=&quot;Table_S5&quot;, ylab=&quot;Table_S2&quot;, main=&quot;FC comparison&quot;) # perfect match.
 </code></pre>
 
-<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAkAAAAJACAMAAABSRCkEAAAAe1BMVEX9/v0AAAAAADkAAGUAOTkAOWUAOY8AZo8AZrU5AAA5ADk5AGU5OY85ZrU5j9plAABlADllAGVlOQBlZjllZmVltf2POQCPOTmPOWWPtY+P27WP29qP2/21ZgC1Zjm1tWW1/v3ajzna/rXa/v39tWX924/9/rX9/tr9/v397Ei0AAAAKXRSTlP/////////////////////////////////////////////////////AFL0IIcAAAAJcEhZcwAACxIAAAsSAdLdfvwAAAzuSURBVHic7d0Ne9rWAYbhydk8vLom2QbtVns15fP//8IhgQ0OpBa8SqyP+77S4GB8oponR0dgxF82EPjLR28A3SYgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIjLcgNbTojLZbFbj7eXD9UOtxp+em9uwbhHQZLPYfTD66C3qpCEHtJ82tiVtZ59ZcfP48sei+sxsNy0tir9Pt1fMytS2X/P77rNldNsvWE9v/lXc/LecgZZ3b7/ucNteE9D2nr+dl3+c7K8uZ6Ptp57209J+fqqu3M9at/Nqp7e9rK64/WMb0Ms1r1+3v+3oA/8Xf4QhB/RayPHyZ3lXxTNZ3m0nmNX45nGxDWc7u0zKj6vJaptK1Vq58tleMdp9tMuw/Pr911W3XRS7a/tLQF8F9PKnRTV3zIpJ+cGulTKKctaalTcpZ5zdlbuAqhlo+9nXr6s+tRoLqK++sQtb7Hc6XwVU7q2OAioXPG8DqtZARTlh7b+uuq2A+us1oO3ccbSIrnZhVSKvu7DjgPa7sHISKm95FFDpeNcnoJ57DejtYfyZRfSbgHZL5UXx9Qz0MicdLaIF1GuHgL56IPGp2E1Gr4fxb3Zhv1eHWuWNHl4WOodd2PHXCYgTR9GxI6BLCOiEgC4hoBMCIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAi7wa0+vJc/cxw33+2l+vUCahsaLP8+UdsDl1TJ6Dl/Xw3E8HX3g9ofPPbr+UMdG8fxqkai+jqBAKLMz9NXjAEcUDf9M7Q9IKAiDQV0NEiuubkRi+YgYgIiIiAiAiISBrQ7uyjxbkT1gpoCOIZaD391jncBTQE+S5s9fnxqqHpBWsgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICJxQMu7ovTp+dKh6YU0oPV0Ul0ubucXDk0vpAGtvjy/uaw/NL1gBiISr4FWY2ugIXMURkRARJoK6GgRXby4fqvoDDMQEQERERARARGJH4ke71fMpw8ECWgI4hloPX24bmh6Id+FrT4/XjU0vWANRERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBE0oBWX543q3FR3M4vHZpeaCCgsqHN8udLh6YXGghoeT/fzUSXDU0vxAGNb377tZyB7k/2YQIagnwRvZ4Wo83i08kEJKBBcBRGREBEmgroaBFdvLh+q+gMMxAXOL1PBUQkDmh5V+2uHIUNVBrQejqpLhenz2UIaAiaeC7s+LL+0PSCGYhIvAYqn4q3BhouR2FEBEREQEQERERARARERED8uXfuRgERERARAREREBEBEREQ59W8+wRERECcVffeExARAREREKcuuOsERERARATEVy673wTEWxfebQLiLQHxIwmIYxffaQIiIiBeXXNSOQHx6pp7TEC8uOoOExA7V54UVUBUrj2proCoXHtvCYjS1XeWgNhcvwMTEKXgrhIQwfwjILJ+BER2R9UJaHlX3DyePZd4MjTtEL6rUo2AynOJr6cPAuqn8G6qEdAunKeRgPoovZdqzkBbs7/+JKDeid8WsM4aaDV+KC9mZ97OIBiaFsjfVtJR2JA18LakAhqwJt7Wtt4ubFQeyl+4BxNQ2zXytsh1Anp6qBbSs1GjQ9MLNQ/jl9sjMIfxnKoZ0Ox2XkXU4ND0Qq1d2KR8IHrzNGp0aHqh3iK6uJ2XK+lGh6YXHMYTuSygxaS5oekFAREREBEBEREQEQERERCR+HGg5V1ROvNUvYCGoF5A62lx+8fnxzM32P+862ZxO79waHqhVkDr6cPyfn6mkcNrfc48VS+gIagV0LaObUBnf5zDDDRwF8xAs3MzUPlMqzXQgNVeAxXF2X6uH5pe8Gw8kaYCOlogFS+u3yo6o86PtI73QXhhISfswoh4JJrIBUdho3M38DjQwNV9HGj7+9nHgTwSPXB1H4nefOMMZWaggau3C3uqZqDRuVt4JHrYHMYTcRhPREBE6gU0swvjvHpHYZ8fFyPnB+KMuofxu19NDk0v1Hsg8ZfH7S/nB+JUvTXQtp1FUTw0OjS94CiMSO23Omh8aHpBQEQERKStz4WpryNaOgPppyvaGZBXdHRGKwPST3e08XEg/XRICwPST5e0MaDg7+RHa19A+umU1gWkn25pW0AWQB3TsoDk0zUtC4iuaVVA9l/d066Agr+Nj9GmgPTTQW0KiA5qT0B66yQBEWlPQHRSSwISW1e1IyD9dFY7AqKzWhGQ1LqrFQHRXR8fkCfAOu3jA6LTBETkowNSWcd9dEB0nICICIiIgIgIiIiAiAiIyIcFJK9+MAMRERARAREREBEBEREQEQERERARARFJAypPY1++G8vt/NKh6YUGAqreCmH586VD0wsNBLS8n599Qw0BDUEc0Pjmt1/LGej+ZB92MrSieihfRK+nxWizOPNmdHoZAkdhRAREpKmALKIHygxE5DsEVLy4aoPoljig5d233hJcQEOQBrSeTqrLxelzGQIagiaeCzu+rD80vWAGIhKvgcqn4q2BhsthPBEBEWkmoNnD5UPTCwIiIiAi1kBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREJA5oeVeUPj1fOjS9kAa0nk6qy8Xt/MKh6YU0oNWX5zeX9YemF8xAROI10GpsDTRkjsKICIhIUwFZRA+UGYjIdwioeHHVBtEtZiAiAiISPxI93u+vTh8IEtAQxDPQevpw3dD0Qr4LW31+vGpoesEaiIiAiDQT0OzcOkhAQyAgIgIiYg1EREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARL5nQAzB9wuoWY3PZwb8EQMKyIDRgAIyYDSggAwYDSggA0YDCsiA0YACMmA0YHsCopMERERARAREREBEBEREQEQERERARAREpB0BLX96ri5X4+J2ng93GGZWFMWn58aGa+f2lRr+Dh4GfG8LWxHQYr+J6+lkMxvFwx0N8zSJRzsarp3bV2r4O3gY8N0tbENATzf/2eW++vL8Wn7gMMz6l8d4646Ga+f2bZr/Dh4GfHcL2xDQ63y5vJ9vVp/j7+lhmO2EXhTpP/LDcO3cvt2YjX4HDwO+u4WtCmhx28j//mGY5T8e83/lh+HauX2VZr+DhwHf3cIPDuipKEabJv/9lAN+NUy6zviOM1ClkXXQ95qBKn+2ha2agRpfY1TSO+g7roEqTQbU1BqoowGtpw/NHOW8DFPO6Otfw+/nYbh2bl+l2e/g5s0+8U+3sD0Blf81+jhLOeCsKG7iCf0wXDu3r9Twd/Aw4Htb2I6A6CwBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBERHQifW0epej159N372o5fTFMuWLNssXkDd2goROEtA5b2r5RkCr8fb62Tazpk6Q0E0COmdXy/Kueln407/Li/1rZg5TTXWb1efHpk6Q0FECOucljuqDp9v59qL66PhVe+vpbifX3AkSOklA57zur8qXCpe7qKfJ9qqyqPKKF4vqNXfNnSChkwR0zj6gp2p1/L/Hl4DKuebtyzTLeqpbDnYKEtA5u13YeLfy2caxnlYBfTleRy9G5e/7cgTEsSqg6tXh2xnmabQ5rIEWr0f31VHYdq/W3AkSOklA5+x2YbOi+Ns/J+VR2M3jy1HY0R6s3KOVf2zsBAmdJCAiArpU+ejQyWJ6uAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQET+D28IsxR+4xcZAAAAAElFTkSuQmCC" alt="plot of chunk unnamed-chunk-16"/> </p>
+<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAkAAAAJACAMAAABSRCkEAAAAe1BMVEX9/v0AAAAAADkAAGUAOTkAOWUAOY8AZo8AZrU5AAA5ADk5AGU5OY85ZrU5j9plAABlADllAGVlOQBlZjllZmVltf2POQCPOTmPOWWPtY+P27WP29qP2/21ZgC1Zjm1tWW1/v3ajzna/rXa/v39tWX924/9/rX9/tr9/v397Ei0AAAAKXRSTlP/////////////////////////////////////////////////////AFL0IIcAAAAJcEhZcwAACxIAAAsSAdLdfvwAAAzuSURBVHic7d0Ne9rWAYbhydk8vLom2QbtVns15fP//8IhgQ0OpBa8SqyP+77S4GB8oponR0dgxF82EPjLR28A3SYgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIjLcgNbTojLZbFbj7eXD9UOtxp+em9uwbhHQZLPYfTD66C3qpCEHtJ82tiVtZ59ZcfP48sei+sxsNy0tir9Pt1fMytS2X/P77rNldNsvWE9v/lXc/LecgZZ3b7/ucNteE9D2nr+dl3+c7K8uZ6Ptp57209J+fqqu3M9at/Nqp7e9rK64/WMb0Ms1r1+3v+3oA/8Xf4QhB/RayPHyZ3lXxTNZ3m0nmNX45nGxDWc7u0zKj6vJaptK1Vq58tleMdp9tMuw/Pr911W3XRS7a/tLQF8F9PKnRTV3zIpJ+cGulTKKctaalTcpZ5zdlbuAqhlo+9nXr6s+tRoLqK++sQtb7Hc6XwVU7q2OAioXPG8DqtZARTlh7b+uuq2A+us1oO3ccbSIrnZhVSKvu7DjgPa7sHISKm95FFDpeNcnoJ57DejtYfyZRfSbgHZL5UXx9Qz0MicdLaIF1GuHgL56IPGp2E1Gr4fxb3Zhv1eHWuWNHl4WOodd2PHXCYgTR9GxI6BLCOiEgC4hoBMCIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAi7wa0+vJc/cxw33+2l+vUCahsaLP8+UdsDl1TJ6Dl/Xw3E8HX3g9ofPPbr+UMdG8fxqkai+jqBAKLMz9NXjAEcUDf9M7Q9IKAiDQV0NEiuubkRi+YgYgIiIiAiAiISBrQ7uyjxbkT1gpoCOIZaD391jncBTQE+S5s9fnxqqHpBWsgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICJxQMu7ovTp+dKh6YU0oPV0Ul0ubucXDk0vpAGtvjy/uaw/NL1gBiISr4FWY2ugIXMURkRARJoK6GgRXby4fqvoDDMQEQERERARARGJH4ke71fMpw8ECWgI4hloPX24bmh6Id+FrT4/XjU0vWANRERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBE0oBWX543q3FR3M4vHZpeaCCgsqHN8udLh6YXGghoeT/fzUSXDU0vxAGNb377tZyB7k/2YQIagnwRvZ4Wo83i08kEJKBBcBRGREBEmgroaBFdvLh+q+gMMxAXOL1PBUQkDmh5V+2uHIUNVBrQejqpLhenz2UIaAiaeC7s+LL+0PSCGYhIvAYqn4q3BhouR2FEBEREQEQERERARARERED8uXfuRgERERARAREREBEBEREQ59W8+wRERECcVffeExARAREREKcuuOsERERARATEVy673wTEWxfebQLiLQHxIwmIYxffaQIiIiBeXXNSOQHx6pp7TEC8uOoOExA7V54UVUBUrj2proCoXHtvCYjS1XeWgNhcvwMTEKXgrhIQwfwjILJ+BER2R9UJaHlX3DyePZd4MjTtEL6rUo2AynOJr6cPAuqn8G6qEdAunKeRgPoovZdqzkBbs7/+JKDeid8WsM4aaDV+KC9mZ97OIBiaFsjfVtJR2JA18LakAhqwJt7Wtt4ubFQeyl+4BxNQ2zXytsh1Anp6qBbSs1GjQ9MLNQ/jl9sjMIfxnKoZ0Ox2XkXU4ND0Qq1d2KR8IHrzNGp0aHqh3iK6uJ2XK+lGh6YXHMYTuSygxaS5oekFAREREBEBEREQEQERERCR+HGg5V1ROvNUvYCGoF5A62lx+8fnxzM32P+862ZxO79waHqhVkDr6cPyfn6mkcNrfc48VS+gIagV0LaObUBnf5zDDDRwF8xAs3MzUPlMqzXQgNVeAxXF2X6uH5pe8Gw8kaYCOlogFS+u3yo6o86PtI73QXhhISfswoh4JJrIBUdho3M38DjQwNV9HGj7+9nHgTwSPXB1H4nefOMMZWaggau3C3uqZqDRuVt4JHrYHMYTcRhPREBE6gU0swvjvHpHYZ8fFyPnB+KMuofxu19NDk0v1Hsg8ZfH7S/nB+JUvTXQtp1FUTw0OjS94CiMSO23Omh8aHpBQEQERKStz4WpryNaOgPppyvaGZBXdHRGKwPST3e08XEg/XRICwPST5e0MaDg7+RHa19A+umU1gWkn25pW0AWQB3TsoDk0zUtC4iuaVVA9l/d066Agr+Nj9GmgPTTQW0KiA5qT0B66yQBEWlPQHRSSwISW1e1IyD9dFY7AqKzWhGQ1LqrFQHRXR8fkCfAOu3jA6LTBETkowNSWcd9dEB0nICICIiIgIgIiIiAiAiIyIcFJK9+MAMRERARAREREBEBEREQEQERERARARFJAypPY1++G8vt/NKh6YUGAqreCmH586VD0wsNBLS8n599Qw0BDUEc0Pjmt1/LGej+ZB92MrSieihfRK+nxWizOPNmdHoZAkdhRAREpKmALKIHygxE5DsEVLy4aoPoljig5d233hJcQEOQBrSeTqrLxelzGQIagiaeCzu+rD80vWAGIhKvgcqn4q2BhsthPBEBEWkmoNnD5UPTCwIiIiAi1kBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREJA5oeVeUPj1fOjS9kAa0nk6qy8Xt/MKh6YU0oNWX5zeX9YemF8xAROI10GpsDTRkjsKICIhIUwFZRA+UGYjIdwioeHHVBtEtZiAiAiISPxI93u+vTh8IEtAQxDPQevpw3dD0Qr4LW31+vGpoesEaiIiAiDQT0OzcOkhAQyAgIgIiYg1EREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARL5nQAzB9wuoWY3PZwb8EQMKyIDRgAIyYDSggAwYDSggA0YDCsiA0YACMmA0YHsCopMERERARAREREBEBEREQEQERERARAREpB0BLX96ri5X4+J2ng93GGZWFMWn58aGa+f2lRr+Dh4GfG8LWxHQYr+J6+lkMxvFwx0N8zSJRzsarp3bV2r4O3gY8N0tbENATzf/2eW++vL8Wn7gMMz6l8d4646Ga+f2bZr/Dh4GfHcL2xDQ63y5vJ9vVp/j7+lhmO2EXhTpP/LDcO3cvt2YjX4HDwO+u4WtCmhx28j//mGY5T8e83/lh+HauX2VZr+DhwHf3cIPDuipKEabJv/9lAN+NUy6zviOM1ClkXXQ95qBKn+2ha2agRpfY1TSO+g7roEqTQbU1BqoowGtpw/NHOW8DFPO6Otfw+/nYbh2bl+l2e/g5s0+8U+3sD0Blf81+jhLOeCsKG7iCf0wXDu3r9Twd/Aw4Htb2I6A6CwBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBERHQifW0epej159N372o5fTFMuWLNssXkDd2goROEtA5b2r5RkCr8fb62Tazpk6Q0E0COmdXy/Kueln407/Li/1rZg5TTXWb1efHpk6Q0FECOucljuqDp9v59qL66PhVe+vpbifX3AkSOklA57zur8qXCpe7qKfJ9qqyqPKKF4vqNXfNnSChkwR0zj6gp2p1/L/Hl4DKuebtyzTLeqpbDnYKEtA5u13YeLfy2caxnlYBfTleRy9G5e/7cgTEsSqg6tXh2xnmabQ5rIEWr0f31VHYdq/W3AkSOklA5+x2YbOi+Ns/J+VR2M3jy1HY0R6s3KOVf2zsBAmdJCAiArpU+ejQyWJ6uAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQET+D28IsxR+4xcZAAAAAElFTkSuQmCC" alt="plot of chunk unnamed-chunk-17"/> </p>
 
-<h1>But this is odd, we were able to reproduce table s2 and table s2 matches table s5, but table s5 fold changes does not match our reproduced values as good as the match for table s2.</h1>
+<p>But this is odd, we were able to reproduce table s2 and table s2 matches table s5, but table s5 fold changes does not match our reproduced values as good as the match for table s2.</p>
 
-<h1>The reason that the line is not as straight for the reproduce FC&#39;s for table s5 as for the mean expressions in table S2 is because of different scale in the plot and the fact that the small difference will be higher for a ratio (combining to values with a individual deviation from the tables.)</h1>
+<p>The reason that the line is not as straight for the reproduce FC&#39;s for table s5 as for the mean expressions in table S2 is because of different scale in the plot and the fact that the small difference will be higher for a ratio (combining to values with a individual deviation from the tables.)</p>
 
 <pre><code class="r">x = (meanDP - meanN)[table_s2$ID]
 y = fc_table_s2
 plot(x, y , ylim=lim, xlim=lim, pch=&quot;.&quot; ,  xlab=&quot;reproduced&quot;, ylab=&quot;Table_S2&quot;, main=&quot;FC comparison&quot;) # perfect match.
 </code></pre>
 
-<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAkAAAAJACAMAAABSRCkEAAAAflBMVEX9/v0AAAAAADkAAGUAOTkAOWUAOY8AZo8AZrU5AAA5ADk5AGU5OWU5OY85ZrU5j485j9plAABlADllAGVlOQBlZjlltf2POQCPOTmPOWWPjzmPtY+P27WP29qP2/21ZgC1tWW1/v3ajzna/rXa/v39tWX924/9/rX9/tr9/v20noQqAAAAKnRSTlP//////////////////////////////////////////////////////wAyqPBcAAAACXBIWXMAAAsSAAALEgHS3X78AAAOT0lEQVR4nO3dC1vb2IHH4YrsUthupjhpobPtQHHx7ft/wbXkO5gg+y+wffS+z0yc2HAeWfnl6Mg3/jSDwJ9OvQFcNgERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQkf4GNH2oGvez2WQwv7w7fqjJ4Ntzdxt2WQR0PxstfnNz6i26SH0OaDltzEuazz7D6upx9cequWW4mJZG1Z8f5lcM69Tm3/Pvxa11dPNvmD5c/b26+lc9A41vd79v87VFE9D8b/76pf7j/fLqejaa3/S0nJaW81Nz5XLWun5pDnrzy+aK6//MA1pds/6+5deWPq/1OaB1IdvLn/FtE8/9+HY+wUwGV4+jeTjz2eW+/n0zWc1TaVqrVz7zK24Wv1tkWH//8vuarx1Vi2vLJaBXAa3+NGrmjmF1X/9m0UodRT1rDesvqWecxZWLgJoZaH7r+vuamyYDAZXqnUPYaHnQeRVQfbTaCqhe8OwG1KyBqnrCWgc0v1JA5VoHNJ87thbRzSGsSWR9CNsOaHkIqyeh+iu3AqptH/oEVLh1QLun8XsW0TsBLZbKo+r1DLSak7YW0QIq2iagVw8kPlWLyWh9Gr9zCPt3c6pVf9HdaqGzOYRtf5+AeGMrOhYEdAgBvSGgQwjoDQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREJEPA5r8fG5eM1z6a3s5TpuA6oZm49++YnO4NG0CGn9/WcxE8NrHAQ2u/vi9noG+O4bxVotFdPMBAqM9ryav6IM4oHd9MDRFEBCRrgLaWkS3nNwoghmIiICICIiIgIikAS0+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Ip8QULVy1AZxWeKAxrfv/UhwAfVBGtD04b65HL19LkNAfdDFc2Hbl+2HpghmICLxGqh+Kt4aqL+cxhMREJFuAhreHT40RRAQEQERsQYiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgInFA49uq9u350KEpQhrQ9OG+uRxdvxw4NEVIA5r8fN65bD80RTADEYnXQJOBNVCfOQsjIiAiXQVkEd1TZiAinxBQtXLUBnFZzEBEBEQkfiR6sDxevX0gSEB9EM9A04e744amCPkhbPLj8aihKYI1EBEBEekmoOG+dZCA+kBARARExBqIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiHxmQPTB5wXUrc7nMwN+xYACMmA0oIAMGA0oIANGAwrIgNGAAjJgNKCADBgNeD4BcZEERERARAREREBEBEREQEQERERARARE5DwCGv/lubmcDKrrl3y4zTDDqqq+PXc23HluX63jPbgZ8KMtPIuARstNnD7cz4Y38XBbwzzdx6NtDXee21freA9uBvxwC88hoKerfy5yn/x8Xpcf2Awz/cdjvHVbw53n9s2634ObAT/cwnMIaD1fjr+/zCY/4n26GWY+oVdV+o98M9x5bt9izE734GbAD7fwrAIaXXdy9zfDjP/nMf9XvhnuPLev0e0e3Az44RaeOKCnqqqP2N39+6kHfDVMus74xBmo0ck66LNmoMavtvCsZqDO1xiN9C/oE9dAjS4D6moNdKEBTR/uujnLWQ1Tz+jT38P9uRnuPLev0e0enO0cE3+5hecTUP1/p4+z1AMOq+oqntA3w53n9tU63oObAT/awvMIiIslICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICOkz95vPDbyqYgA4joFcEtGP8v3/79jwZ1B9NMfn5f/UbWrauqd8z899/u996B8389p2bTr35JyCgHePbeQRPzZvzJoPrl9G359U19Tvs6otqFVA94cyvXHzx8qZTb/4JCGhHM7P8eKzfIjwZ3NcfK9Bc87O5tr6YZ7MMaPlu5+UXL2469eafgIB2LA9N9bsxm88oeFofsJYtba6pP8dgtvri5U2n3vwTENCO1XwzW8wtLWagn+sPNTADsfhIgcWKZzK4qS+2rlkudOqyht+aNdD8xp2bTr35JyCgHU0uy9OrH39vzsKW19SnWtOH5lRrWFV//bl1FlZ/+MDypv4R0Hu6+Zym4gnoPQJqRUBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQEROT/AS+BbVnrWfVhAAAAAElFTkSuQmCC" alt="plot of chunk unnamed-chunk-17"/> </p>
+<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAkAAAAJACAMAAABSRCkEAAAAflBMVEX9/v0AAAAAADkAAGUAOTkAOWUAOY8AZo8AZrU5AAA5ADk5AGU5OWU5OY85ZrU5j485j9plAABlADllAGVlOQBlZjlltf2POQCPOTmPOWWPjzmPtY+P27WP29qP2/21ZgC1tWW1/v3ajzna/rXa/v39tWX924/9/rX9/tr9/v20noQqAAAAKnRSTlP//////////////////////////////////////////////////////wAyqPBcAAAACXBIWXMAAAsSAAALEgHS3X78AAAOT0lEQVR4nO3dC1vb2IHH4YrsUthupjhpobPtQHHx7ft/wbXkO5gg+y+wffS+z0yc2HAeWfnl6Mg3/jSDwJ9OvQFcNgERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQkf4GNH2oGvez2WQwv7w7fqjJ4Ntzdxt2WQR0PxstfnNz6i26SH0OaDltzEuazz7D6upx9cequWW4mJZG1Z8f5lcM69Tm3/Pvxa11dPNvmD5c/b26+lc9A41vd79v87VFE9D8b/76pf7j/fLqejaa3/S0nJaW81Nz5XLWun5pDnrzy+aK6//MA1pds/6+5deWPq/1OaB1IdvLn/FtE8/9+HY+wUwGV4+jeTjz2eW+/n0zWc1TaVqrVz7zK24Wv1tkWH//8vuarx1Vi2vLJaBXAa3+NGrmjmF1X/9m0UodRT1rDesvqWecxZWLgJoZaH7r+vuamyYDAZXqnUPYaHnQeRVQfbTaCqhe8OwG1KyBqnrCWgc0v1JA5VoHNJ87thbRzSGsSWR9CNsOaHkIqyeh+iu3AqptH/oEVLh1QLun8XsW0TsBLZbKo+r1DLSak7YW0QIq2iagVw8kPlWLyWh9Gr9zCPt3c6pVf9HdaqGzOYRtf5+AeGMrOhYEdAgBvSGgQwjoDQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREJEPA5r8fG5eM1z6a3s5TpuA6oZm49++YnO4NG0CGn9/WcxE8NrHAQ2u/vi9noG+O4bxVotFdPMBAqM9ryav6IM4oHd9MDRFEBCRrgLaWkS3nNwoghmIiICICIiIgIikAS0+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Ip8QULVy1AZxWeKAxrfv/UhwAfVBGtD04b65HL19LkNAfdDFc2Hbl+2HpghmICLxGqh+Kt4aqL+cxhMREJFuAhreHT40RRAQEQERsQYiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgInFA49uq9u350KEpQhrQ9OG+uRxdvxw4NEVIA5r8fN65bD80RTADEYnXQJOBNVCfOQsjIiAiXQVkEd1TZiAinxBQtXLUBnFZzEBEBEQkfiR6sDxevX0gSEB9EM9A04e744amCPkhbPLj8aihKYI1EBEBEekmoOG+dZCA+kBARARExBqIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiHxmQPTB5wXUrc7nMwN+xYACMmA0oIAMGA0oIANGAwrIgNGAAjJgNKCADBgNeD4BcZEERERARAREREBEBEREQEQERERARARE5DwCGv/lubmcDKrrl3y4zTDDqqq+PXc23HluX63jPbgZ8KMtPIuARstNnD7cz4Y38XBbwzzdx6NtDXee21freA9uBvxwC88hoKerfy5yn/x8Xpcf2Awz/cdjvHVbw53n9s2634ObAT/cwnMIaD1fjr+/zCY/4n26GWY+oVdV+o98M9x5bt9izE734GbAD7fwrAIaXXdy9zfDjP/nMf9XvhnuPLev0e0e3Az44RaeOKCnqqqP2N39+6kHfDVMus74xBmo0ck66LNmoMavtvCsZqDO1xiN9C/oE9dAjS4D6moNdKEBTR/uujnLWQ1Tz+jT38P9uRnuPLev0e0enO0cE3+5hecTUP1/p4+z1AMOq+oqntA3w53n9tU63oObAT/awvMIiIslICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICOkz95vPDbyqYgA4joFcEtGP8v3/79jwZ1B9NMfn5f/UbWrauqd8z899/u996B8389p2bTr35JyCgHePbeQRPzZvzJoPrl9G359U19Tvs6otqFVA94cyvXHzx8qZTb/4JCGhHM7P8eKzfIjwZ3NcfK9Bc87O5tr6YZ7MMaPlu5+UXL2469eafgIB2LA9N9bsxm88oeFofsJYtba6pP8dgtvri5U2n3vwTENCO1XwzW8wtLWagn+sPNTADsfhIgcWKZzK4qS+2rlkudOqyht+aNdD8xp2bTr35JyCgHU0uy9OrH39vzsKW19SnWtOH5lRrWFV//bl1FlZ/+MDypv4R0Hu6+Zym4gnoPQJqRUBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQEROT/AS+BbVnrWfVhAAAAAElFTkSuQmCC" alt="plot of chunk unnamed-chunk-18"/> </p>
 
 <pre><code class="r"># Still there is a offset in the numbers.
 commonprobes = table_s5$Probe[table_s5$Probe %in% table_s2$ID]
@@ -727,822 +749,14 @@ ttest_p = apply(datamatrices[[&quot;real_combat_covariates&quot;]], 1, function(
 anova_p = apply(datamatrices[[&quot;real_combat_covariates&quot;]], 1, function(x) {
     summary(aov(x[DP | N] ~ sampleannotation$covariate[DP | N]))[[1]][1, 5]
 })  # aov er kanskje feil for dette, Er ikke live mange pr?ver i guppene.
-wilcoxon_p = apply(datamatrices[[&quot;real_combat_covariates&quot;]], 1, function(x) {
-    wilcox.test(x[sampleannotation$covariate == &quot;DP&quot;], x[sampleannotation$covariate == 
-        &quot;N&quot;])$p.value
-})
-</code></pre>
 
-<pre><code>## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
+# wilcox.test gives a few hundred warnings for ties.  Warning: cannot
+# compute exact p-value with ties
+wilcoxon_p = suppressWarnings(apply(datamatrices[[&quot;real_combat_covariates&quot;]], 
+    1, function(x) {
+        wilcox.test(x[sampleannotation$covariate == &quot;DP&quot;], x[sampleannotation$covariate == 
+            &quot;N&quot;])$p.value
+    }))
 </code></pre>
 
 <pre><code class="r">par(mfrow=c(2, 2))
@@ -1553,7 +767,7 @@ plot(log10(table_s5$anova_p), log10(anova_p[table_s5$Probe]), pch=&quot;.&quot;,
 plot(log10(table_s5$wilcoxon_p), log10(wilcoxon_p[table_s5$Probe]), pch=&quot;.&quot;, main=&quot;wilcoxon p&quot;)
 </code></pre>
 
-<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAkAAAAJACAMAAABSRCkEAAAAvVBMVEX9/v0AAAAAADkAAGUAOWUAOY8AZrU5AAA5ADk5AGU5OTk5OWU5OY85ZmU5Zo85ZrU5j9plAABlADllAGVlOQBlOTllOY9lZjllZmVlZo9lZrVlj49lj9pltf2POQCPOTmPOWWPZgCPZmWPj7WPtY+PtdqPtf2P29qP2/21ZgC1Zjm1ZmW1jzm1j4+124+1/rW1/tq1/v3ajznaj2XatWXa24/a29ra/rXa/tra/v39tWX924/9/rX9/tr9/v2bi0hZAAAAP3RSTlP//////////////////////////////////////////////////////////////////////////////////wCOJnwXAAAACXBIWXMAAAsSAAALEgHS3X78AAAgAElEQVR4nO2dC4PbtpWFi7ijSVJnrYlbJ5uuxu42dUfONsmoD2coif//Zy0B8AGSeD9IQDxfG8+MSALg1eHFvSBA/q4GIIDfrd0AUDYQEAgCAgJBQEAgCAgIBAEBgSAgIBAEBASCgIBAEBAQCAICAkFAQCAICAgEAQGBICAgEAQEBIKAgEAQEBAIAgICQUBAIIhsBHR+M/4537JdKnJo/r92K+TkIqDLw270c75lw2SrnjobAV0fCbl76X6e78kXT3V9IoQcui0V+eae7Ndu5zpwD8QscPd/pLGC8Cuz0p7vtYaFMhHQyAOd7/f18dUz+/HFU7ulamR0yvhKTEknIGqBHTWN8Ov5yyf6o17LQjkK6NS4n8Zg53tml15Ae6asLdIJaM86s8Y8wq90K/PXK1koSwERQrijJuTVcy+gw2bDIZ2A6GV2bAW0hoVyElAjmLvPrQdqaVwyPJBWQNRYXRcGDzTEQIOVxBhoUNam0AqIWqj1QGtYKBcB1UfCLiP2k/ZdB9a506yCb0EWJhcQzVK/Z6HztrMwI9VW1WPNOhaCgG4GCAgUCAQEgoCAQBAQEAgCAgJBQEAgCAgIBAEBgSAgIBAEBASCgIBAEBAQCAICAkFAQCAICAgEoRVQxWa3b3MpjQ2wj15A1/d0gu35q+elGlMYsE+tF9Dl3Uvz7/VDZyByw/jYDvYxCehb2RXmZevc8RMQ7OMTA23MQDpgH58sbGMGWrOofICADEBAeiAgAxCQHghI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" alt="plot of chunk unnamed-chunk-21"/> </p>
+<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAkAAAAJACAMAAABSRCkEAAAAvVBMVEX9/v0AAAAAADkAAGUAOWUAOY8AZrU5AAA5ADk5AGU5OTk5OWU5OY85ZmU5Zo85ZrU5j9plAABlADllAGVlOQBlOTllOY9lZjllZmVlZo9lZrVlj49lj9pltf2POQCPOTmPOWWPZgCPZmWPj7WPtY+PtdqPtf2P29qP2/21ZgC1Zjm1ZmW1jzm1j4+124+1/rW1/tq1/v3ajznaj2XatWXa24/a29ra/rXa/tra/v39tWX924/9/rX9/tr9/v2bi0hZAAAAP3RSTlP//////////////////////////////////////////////////////////////////////////////////wCOJnwXAAAACXBIWXMAAAsSAAALEgHS3X78AAAgAElEQVR4nO2dC4PbtpWFi7ijSVJnrYlbJ5uuxu42dUfONsmoD2coif//Zy0B8AGSeD9IQDxfG8+MSALg1eHFvSBA/q4GIIDfrd0AUDYQEAgCAgJBQEAgCAgIBAEBgSAgIBAEBASCgIBAEBAQCAICAkFAQCAICAgEAQGBICAgEAQEBIKAgEAQEBAIAgICQUBAIIhsBHR+M/4537JdKnJo/r92K+TkIqDLw270c75lw2SrnjobAV0fCbl76X6e78kXT3V9IoQcui0V+eae7Ndu5zpwD8QscPd/pLGC8Cuz0p7vtYaFMhHQyAOd7/f18dUz+/HFU7ulamR0yvhKTEknIGqBHTWN8Ov5yyf6o17LQjkK6NS4n8Zg53tml15Ae6asLdIJaM86s8Y8wq90K/PXK1koSwERQrijJuTVcy+gw2bDIZ2A6GV2bAW0hoVyElAjmLvPrQdqaVwyPJBWQNRYXRcGDzTEQIOVxBhoUNam0AqIWqj1QGtYKBcB1UfCLiP2k/ZdB9a506yCb0EWJhcQzVK/Z6HztrMwI9VW1WPNOhaCgG4GCAgUCAQEgoCAQBAQEAgCAgJBQEAgCAgIBAEBgSAgIBAEBASCgIBAEBAQCAICAkFAQCAICAgEoRVQxWa3b3MpjQ2wj15A1/d0gu35q+elGlMYsE+tF9Dl3Uvz7/VDZyByw/jYDvYxCehb2RXmZevc8RMQ7OMTA23MQDpgH58sbGMGWrOofICADEBAeiAgAxCQHghI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" alt="plot of chunk unnamed-chunk-22"/> </p>
 
 <h1>The p-values does not make a straight line, but they are low. But maybe all are low?</h1>
 
@@ -1573,7 +787,7 @@ hist(wilcoxon_p[table_s5$Probe], border=thiscolors[2], add=T, breaks=100)
 legend(&quot;topright&quot;, legend=c(&quot;all probes&quot;, &quot;S5 probes&quot;), text.col=thiscolors)
 </code></pre>
 
-<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAkAAAAJACAMAAABSRCkEAAAA8FBMVEX9/v0AAAAAADkAAGUAOTkAOWUAOY8AZrU5AAA5ADk5AGU5OTk5OWU5OY85ZmU5Zo85ZrU5j9plAABlADllAGVlOQBlOY9lZgBlZjllZmVlZo9lZrVlj9pltf2POQCPOTmPOWWPZgCPZmWPj2WPj7WPtY+P29qP2/21ZgC1Zjm1ZmW1jzm1j4+1tWW124+1/rW1/tq1/v3ajznaj2XatWXa29ra/rXa/tra/v39jzn9tWX924/929r9/rX9/tr9/v3+AAD+OTn+ZgD+Zjn+j9r+tf3+2/3+/v3/AAD/ADn/AGX/OTn/OY//ZmX/ZrX/j9p6acAtAAAAUHRSTlP///////////////////////////////////////////////////////////////////////////////////8A/////////////////////ybLf7oAAAAJcEhZcwAACxIAAAsSAdLdfvwAAB9hSURBVHic7Z0Lg9u2lYXLmXY0iWuvNXHTeFuNk23TobvbpqO8xmQlJG7tqEna+f//ZvHiUyT4uKBI4Z4vzogSIRA8OrgAKAH8hQCAwC/mLgA4b2AgQAIGAiRgIEACBgIkYCBAAgYCJGAgQAIGAiRgIEACBgIkYCBAAgYCJGAgQAIGAiRgIEACBgIkYCBAAgYCJGAgQGKogdLrSLLuSBVf3nftS5/bDJ8fHeLolTJJtGnLtrQry0O+lFRLK/e0ZUHGlzi61KPLeFqFhhtIHmx7cedO1a3R7maln2WPBcevVHDI05xHVZ6O3Gn4Eofm8NMqNMpAqoiytkmlkujZtTz87uaX1xd35iWxjS5/q8y+1kVWtXItRGWfEPvbKLp6yB7znVG0yfbYnIVKs9L/b3XttjXGZm0/rOyQm1Ie36gy/UGl1hmZN/1N7fkqL356nR3EC57EsRFIv/3qf81J55tWBrEUhUYZKFZ6rE1MvHrYRpvdjSytsu5W71FP7TmoF2WxbXK7T1QjULFT5Wz32Jz1yatsNukHdzYK26zt20yhzCE3pTz0gXRqnVG1PHlZr769dQSEmcTJDKTevipy0ptWhsUoNK4PtNGB2pZUF25lYrfcVg9xrpGNpza53SeqBrI70+vyHpuzPuYHd4mqSEkk60Qh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" alt="plot of chunk unnamed-chunk-22"/> </p>
+<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAkAAAAJACAMAAABSRCkEAAAA8FBMVEX9/v0AAAAAADkAAGUAOTkAOWUAOY8AZrU5AAA5ADk5AGU5OTk5OWU5OY85ZmU5Zo85ZrU5j9plAABlADllAGVlOQBlOY9lZgBlZjllZmVlZo9lZrVlj9pltf2POQCPOTmPOWWPZgCPZmWPj2WPj7WPtY+P29qP2/21ZgC1Zjm1ZmW1jzm1j4+1tWW124+1/rW1/tq1/v3ajznaj2XatWXa29ra/rXa/tra/v39jzn9tWX924/929r9/rX9/tr9/v3+AAD+OTn+ZgD+Zjn+j9r+tf3+2/3+/v3/AAD/ADn/AGX/OTn/OY//ZmX/ZrX/j9p6acAtAAAAUHRSTlP///////////////////////////////////////////////////////////////////////////////////8A/////////////////////ybLf7oAAAAJcEhZcwAACxIAAAsSAdLdfvwAAB9hSURBVHic7Z0Lg9u2lYXLmXY0iWuvNXHTeFuNk23TobvbpqO8xmQlJG7tqEna+f//ZvHiUyT4uKBI4Z4vzogSIRA8OrgAKAH8hQCAwC/mLgA4b2AgQAIGAiRgIEACBgIkYCBAAgYCJGAgQAIGAiRgIEACBgIkYCBAAgYCJGAgQAIGAiRgIEACBgIkYCBAAgYCJGAgQGKogdLrSLLuSBVf3nftS5/bDJ8fHeLolTJJtGnLtrQry0O+lFRLK/e0ZUHGlzi61KPLeFqFhhtIHmx7cedO1a3R7maln2WPBcevVHDI05xHVZ6O3Gn4Eofm8NMqNMpAqoiytkmlkujZtTz87uaX1xd35iWxjS5/q8y+1kVWtXItRGWfEPvbKLp6yB7znVG0yfbYnIVKs9L/b3XttjXGZm0/rOyQm1Ie36gy/UGl1hmZN/1N7fkqL356nR3EC57EsRFIv/3qf81J55tWBrEUhUYZKFZ6rE1MvHrYRpvdjSytsu5W71FP7TmoF2WxbXK7T1QjULFT5Wz32Jz1yatsNukHdzYK26zt20yhzCE3pTz0gXRqnVG1PHlZr769dQSEmcTJDKTevipy0ptWhsUoNK4PtNGB2pZUF25lYrfcVg9xrpGNpza53SeqBrI70+vyHpuzPuYHd4mqSEkk60Qh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" alt="plot of chunk unnamed-chunk-23"/> </p>
 
 </body>
 
