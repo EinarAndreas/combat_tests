@@ -4,7 +4,7 @@ Reproduction and alternative analysis of "Comparing the Biological Impact of Gla
 
 
 
-2014-02-24 08:34:02
+2014-02-26 10:52:38
 
 ### Overview
 This report aims to show that the use of the statistical tool ComBat from [Johnson et al.](http://biostatistics.oxfordjournals.org/content/8/1/118.abstract) led to false results in the analysis performed in [Towfic et al.'s ](http://www.plosone.org/article/info%3Adoi%2F10.1371%2Fjournal.pone.0083757) "Comparing the Biological Impact of Glatiramer Acetate with the Biological Impact of a Generic".
@@ -14,7 +14,7 @@ This document has five main parts
 - Reproduce some of the results to show that we are working on the same data and analysis workflow
 - Remove the use of ComBat and perform an similar analysis with alternative established tools
 - Estimate the error introduced by ComBat and the consequences for the conclusion of the study
-- Perform a few more sanity checks to substantiate that the difference in results for the two above analysis is mainly due to error introduced by ComBat
+- Perform a few more sanity checks to substantiate that the difference in results for the two above analysis is mainly introduced by ComBat
 
 
 ### Getting the data
@@ -26,14 +26,14 @@ includelibs = c("Biobase", "GEOquery", "sva", "limma", "preprocessCore")
 lapply(includelibs, require, character.only = T)
 ```
 
-The important sample information is described in Table S1 from Towfic et al. the its usage in ComBat is described briefly in the methods;
+The important sample information is described in Table S1 from Towfic et al. and its usage in ComBat is described briefly in the methods;
 >  Each microarrays chip designation was supplied a batch label; there were 18 batches in all. The labels for the treatments (i.e. drug product, reference standard) were added as covariates.<cite> Towfic et al.
 
 Table S1 does have a "Chip"- coloumn, unfortunatly there is no dedicated "treatment"-coloumn.
 Communication with the corresponding author yielded this explanation
 > ..and the only thing we used as a covariate was the unique treatment names themselves (e.g. ³Medium² or ³RS").
 
-Based on these descriptions and the annotation for the GEO deposit, we compiled a more complete sample annotation file.
+Based on these descriptions and the annotation for the GEO deposit, we compiled a more complete sample annotation file (sampleannotation.csv).
 
 
 ```r
@@ -55,7 +55,13 @@ head(sampleannotation)
 ## MBP        6   MBP       MBP 4634633002    F    other    GSM996658
 ```
 
-The "covariate"-coloumn is made based on the "code"-coloumn, but might not match  to what were actually used. The last two coloumns are from the GEO deposit and reveal that 3 of the samples do not have data and are taken out.
+The "covariate"-coloumn is made based on the "code"-coloumn, but might not match  to what were actually used for all samples. The last two coloumns are from the GEO deposit and reveal that 3 of the samples do not have data and are taken out.
+
+The nameing convention seeme to differ slightly between the Table S1 and the text in Towfic et al. This is our interpretation of covariate labels and its corresponding name in the text.
+- **DP** refferd to as GA (but not GA as in table S1)
+- **N** refferd to as "generic"
+- **M** reffered to as "medium"
+- **RS** reffered to as "reference standard""
 
 
 ```r
@@ -66,7 +72,6 @@ sampleannotation = sampleannotation[!is.na(sampleannotation$geoaccession), ]
 The batch/covariate design shows many batches and covariate groups.
 
 ```r
-# the batch/covariate design
 table(sampleannotation[, c("chip", "covariate")])
 ```
 
@@ -125,21 +130,28 @@ table(sampleannotation[sampleannotation$covariate %in% c("DP", "N"), c("chip",
 
 > The microarray data have been deposited in the Gene Expression Omnibus, under accession number [GSE40566](http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE40566)
 
-The processed data from the above GEO deposit was deposited for another publication which did not processes the data as described in Tawfic et al. (personal communication). The raw data linked to as [GSE40566_RAW.tar](http://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE40566&format=file) and [GSE40566_non_normalized.txt.gz](http://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE40566&format=file&file=GSE40566%5Fnon%5Fnormalized%2Etxt%2Egz) were thus used, although it is not confirmed that this is the version of the data actually used in Towfic et al.
+The processed data from the above GEO deposit was deposited for another publication which did not processes the data as described in Towfic et al. (personal communication). The files linked to as [GSE40566_RAW.tar](http://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE40566&format=file) and [GSE40566_non_normalized.txt.gz](http://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE40566&format=file&file=GSE40566%5Fnon%5Fnormalized%2Etxt%2Egz) were thus used, although it is not confirmed that this is the version of the data actually used in Towfic et al.
+
+A recap of the important input files used in this report:
+- **sampleannotation.csv** holds the important sample/batch/covariate assignment. Compiled based on inforamtion in Towfic et al, the geo deposit and personal communication.
+- **GSE40566_non_normalized.txt** the measurments in a sample vs probe matrix. From the [GEO deposit](http://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE40566&format=file&file=GSE40566%5Fnon%5Fnormalized%2Etxt%2Egz).
+- **GPL6887_MouseWG-6_V2_0_R3_11278593_A.txt** the probe annotation needed for the datarow to probe to gene mathing. From the GEO deposit inside the [GSE40566_RAW.tar](http://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE40566&format=file).
+
+Reading the data.
 
 ```r
 # the output from Illumina software.
-rawdata = read.table("data/GSE40566_non_normalized.txt", sep = "\t", header = TRUE, 
-    stringsAsFactors = FALSE)
+rawdata = read.table("not_in_github/GSE40566_non_normalized.txt", sep = "\t", 
+    header = TRUE, stringsAsFactors = FALSE)
 
 # the probe annotation file found inside GSE40566_RAW.tar
-rawannotation = read.table("data/GPL6887_MouseWG-6_V2_0_R3_11278593_A.txt", 
+rawannotation = read.table("not_in_github/GPL6887_MouseWG-6_V2_0_R3_11278593_A.txt", 
     sep = "\t", header = TRUE, stringsAsFactors = FALSE, skip = 8, comment.char = "", 
     quote = "", fill = TRUE)
 ```
 
 
-Then some formatting is needed to match the probe information to the measurments and the measurments to the sample information.
+Some formatting is needed to match the probe information to the measurments and the measurments to the sample information.
 
 ```r
 # annotation file has two separate tables, one for experimental and one at
@@ -179,11 +191,11 @@ datamatrix_raw = datamatrix_raw[, match(sampleannotation$code, dimnames(datamatr
 ```
 
 
-Several tables with results are presented in the Supporting Information of in Tawfic et al. We are aiming to reproduce these. Unfortunatly these were only presented in a pdf-format not easely parsed by a computer. We had to resort to a ad-hoc method of cut-and-paste from pdf into text files which were somewhat polluted by pdf-formatting code. For some tables about 10% of the rows will be lost, but the rest will suffice.
+Several tables with results are presented in the Supporting Information in Towfic et al. We are aiming to reproduce these. Unfortunatly these were only presented in a pdf-format not easely parsed by a computer. We had to resort to a ad-hoc method of cut-and-paste from pdf into text files which were somewhat polluted by pdf-formatting code. For some tables about 10% of the rows will be lost, but the rest will suffice for our purpose.
 
 
 ```r
-
+# Table S2
 table_s2 = read.table("data/table_s2.csv", sep = "\t", header = TRUE, stringsAsFactors = FALSE, 
     fill = TRUE)
 table_s2 = as.matrix(table_s2)
@@ -212,12 +224,13 @@ for (n in 3:6) {
     table_s2[, n] = as.numeric(table_s2[, n])
 }
 
-
+# Table S3
 table_s3 = read.table("data/table_s3.csv", sep = "\t", header = TRUE, stringsAsFactors = FALSE, 
     fill = TRUE)
 # one Probe, ('1770446' or 'ILM_1770446') was not found in the data and was
 # thus removed from this textfile
 
+# Table S4
 table_s4 = read.table("data/table_s4.csv", sep = "\t", header = TRUE, stringsAsFactors = FALSE, 
     fill = TRUE)
 # not able to copy-paste the pdf whitout a lot of gibberish clutter the
@@ -241,6 +254,7 @@ print(paste("Lost rows table s4: ", sum(a)))
 table_s4 = table_s4[!a, ]
 table_s4$Var_generic_vs_Var_GA = as.numeric(table_s4$Var_generic_vs_Var_GA)
 
+# Table S5
 table_s5 = read.table("data/table_s5.csv", sep = "\t", header = TRUE, stringsAsFactors = FALSE, 
     fill = TRUE)
 tmp = as.matrix(table_s5)
@@ -271,17 +285,24 @@ table_s5$Fold_Change = as.numeric(table_s5$Fold_Change)
 
 ### Reproduce the original results
 
+> Starting with background-corrected bead-level signals, we quantile normalized the extracted data for all samples across all 46,547 probes via the preprocessCore package in R.
+
 
 ```r
-set.seed(100)
 datamatrices = list()
-datamatrices[["real_raw"]] = datamatrix_raw[1:5000, ]
+datamatrices[["real_raw"]] = datamatrix_raw  #[1:5000,]
 
 # used in paper, but seems to do the same as the limma version. Except it
 # loses dimnames
 datamatrices[["real_qnorm"]] = normalize.quantiles(datamatrices[["real_raw"]])
 dimnames(datamatrices[["real_qnorm"]]) = dimnames(datamatrices[["real_raw"]])
+```
 
+
+> We then corrected for batch variation with ComBat [17] as implemented in the SVA package of R [18]. Each microarrays chip designation was supplied a batch label; there were 18 batches in all. The labels for the treatments (i.e. drug product, reference standard) were added as covariates. 
+
+
+```r
 mod = model.matrix(~as.factor(sampleannotation$covariate))
 mod0 = model.matrix(~1, data = sampleannotation)
 
@@ -299,11 +320,6 @@ datamatrices[["real_combat_covariates"]] = as.matrix(ComBat(dat = datamatrices[[
 ## Adjusting the Data
 ```
 
-The nameing convention seeme to differ slightly between the Table S1 and the text. This is the covariate labels with its corresponging name in the text.
-- **DP** refferd to as GA (but not GA as in table S1)
-- **N** refferd to as "generic"
-- **M** reffered to as "medium"
-- **RS** reffered to as "reference standard""
 
 First we will try to reproduce Table S2.
 
@@ -356,7 +372,7 @@ table(table_s2$ID %in% top1000_RS_vs_M)  #  851 out of 909. For some reason it i
 ```
 ## 
 ## FALSE  TRUE 
-##   824    85
+##    58   851
 ```
 
 ```r
@@ -378,28 +394,18 @@ plot(table_s2$AVG_generic, meanN[table_s2$ID], pch=".")
 
 ![plot of chunk reproduced_tables2](figure/reproduced_tables2.png) 
 
-
+The numbers in Table S2 is almost reproduced.
 
 **Table S3**
 
+> The highly variable probes that were significant by F-test in either GA or generic (see methods section) and are depicted in Figure 1A.<cite> Figure text, Towfic et al.
+
+> In order to identify probes with variability induced specifically by activation (as opposed to experimental noise), we sought to identify probes that were significantly more variable when activated with either GA or generic than medium. Using an F-test, we compared GA against Medium for each probe and compared generic against Medium. We then took the set of probes where either treatment comes up to be more variable than medium (union, passes in at least at least one). For those set of probes only, we compared the variability of GA across 34 samples representing 30 batches, to the variability of generic across 11 samples representing 5 batches, utilizing an F-test to measure significance of the differences between the probes.<cite> Methods, Towfic et al.
+
+There is not description of what was used as a significance threshold here, but for the Identification of differentially expressed genes (TAble S5) a 0.05 FDR cut-off.
+
 
 ```r
-# Table S3. The highly variable probes that were significant by F-test in
-# either GA or generic (see methods section) and are depicted in Figure 1A.
-# MEthods: In order to identify probes with variability induced specifically
-# by activation (as opposed to experimental noise), we sought to identify
-# probes that were significantly more variable when activated with either GA
-# or generic than medium. Using an F-test, we compared GA against Medium for
-# each probe and compared generic against Medium. We then took the set of
-# probes where either treatment comes up to be more variable than medium
-# (union, passes in at least at least one). For those set of probes only, we
-# compared the variability of GA across 34 samples representing 30 batches,
-# to the variability of generic across 11 samples representing 5 batches,
-# utilizing an F-test to measure significance of the differences between the
-# probes.
-
-# do a f-test between DP and medium, and N and medium. And see what is
-# 'significant' (significance cut-off not noted in the text)?
 pvalsN = apply(datamatrices[["real_combat_covariates"]], 1, function(x) {
     var.test(x[sampleannotation$covariate == "N"], x[sampleannotation$covariate == 
         "M"], alternative = "greater")$p.value
@@ -416,7 +422,7 @@ print(table(padjustedN < 0.05))
 ```
 ## 
 ## FALSE 
-##  5000
+## 46237
 ```
 
 ```r
@@ -426,7 +432,7 @@ print(table(padjustedDP < 0.05))
 ```
 ## 
 ## FALSE 
-##  5000
+## 46237
 ```
 
 ```r
@@ -434,55 +440,29 @@ print(table(padjustedDP < 0.05))
 # expressed genes tests.
 ```
 
+We are not able to reproduce this list. An alternative is to inspect the p-values for the probes in the list and see how they compare to the overall p-values.
 
 
 ```r
-# look at the pvalues for the probes found in table_s3
-thiscolors = c("black", "brown", "red", "blue")
-plot(density(pvalsN[table_s3$Probe[table_s3$Type=="generic"]]), col=thiscolors[3], main="P-values for F-test, N or DP vs. Medium")
+par(mfrow=c(2, 1))
+thiscolors = c("red", "blue")
+hist( pvalsN[table_s3$Probe[table_s3$Type=="generic"]], 
+      breaks=100, border="red", 
+      main="P-values for F-test, Table S3 probes",
+      xlab="P-values")
+hist(pvalsDP[table_s3$Probe[table_s3$Type=="GA"]], 
+     breaks=100, border="blue", add=T)
+legend("topright", legend=c("N vs. M", "DP vs. M"), text.col=c("red", "blue"))
+hist( pvalsN, 
+      breaks=100, border="red", 
+      main="All probes", xlab="P-values")
+hist(pvalsDP, 
+     breaks=100, border="blue", add=T)
 ```
 
-```
-## Error: 'x' contains missing values
-```
+![plot of chunk reproduced_tables3](figure/reproduced_tables3.png) 
 
-```r
-lines(density(pvalsN), col=thiscolors[1])
-```
-
-```
-## Error: plot.new has not been called yet
-```
-
-```r
-lines(density(pvalsDP), col=thiscolors[2])
-```
-
-```
-## Error: plot.new has not been called yet
-```
-
-```r
-lines(density(pvalsDP[table_s3$Probe[table_s3$Type=="GA"]]), col=thiscolors[4])
-```
-
-```
-## Error: 'x' contains missing values
-```
-
-```r
-legend("topright", legend=c("All probes, N vs. M", "All probes, DP vs. M", "Table S3 probes, N vs. M", "Table S3 probes, DP vs. M"), text.col=thiscolors)
-```
-
-```
-## Error: plot.new has not been called yet
-```
-
-```r
-# The PRobes from table_s3 are at least enriched for low p-values.
-# But table_s3 is not fully reproduced. More detailed explanation is needed
-```
-
+The probes from Table S3 are at least enriched for low p-values. A more detailed explanation is needed for a better reproducablity.
 
 
 
@@ -508,7 +488,7 @@ table(names(fstatistics)[1:100] %in% table_s4$Probe)  # not a complete reproduct
 ```
 ## 
 ## FALSE  TRUE 
-##    95     5
+##    69    31
 ```
 
 ```r
@@ -524,13 +504,6 @@ plot(table_s4[,3], fstatistics[table_s4$Probe], main="F-statitics from table S4 
 thiscolors = c("black", "red")
 plot(density(fstatistics), col=thiscolors[1], main="Reproduced F-statistics for N vs. DP")
 lines(density(fstatistics[table_s4$Probe]), col=thiscolors[2])
-```
-
-```
-## Error: 'x' contains missing values
-```
-
-```r
 legend("topright", legend=c("All probes", "Table S4 probes"), text.col=thiscolors)
 ```
 
@@ -560,11 +533,7 @@ lim =c( min(   c(min(x), min(y))  ), max( c(max(x), max(y)) ))
 plot(x, y , ylim=lim, xlim=lim, pch=".", xlab="Table_S5", ylab="reproduced", main="FC comparison") # Not a perfect match. And the table_s5 numbers seems offset.
 ```
 
-```
-## Error: need finite 'xlim' values
-```
-
-![plot of chunk unnamed-chunk-15](figure/unnamed-chunk-15.png) 
+![plot of chunk unnamed-chunk-16](figure/unnamed-chunk-16.png) 
 
 
 ```r
@@ -577,11 +546,11 @@ lim =c( min(   c(min(x, na.rm=T), min(y, na.rm=T))  ), max( c(max(x, na.rm=T), m
 plot(x, y , ylim=lim, xlim=lim, pch="." ,  xlab="Table_S5", ylab="Table_S2", main="FC comparison") # perfect match.
 ```
 
-![plot of chunk unnamed-chunk-16](figure/unnamed-chunk-16.png) 
+![plot of chunk unnamed-chunk-17](figure/unnamed-chunk-17.png) 
 
-# But this is odd, we were able to reproduce table s2 and table s2 matches table s5, but table s5 fold changes does not match our reproduced values as good as the match for table s2.
+But this is odd, we were able to reproduce table s2 and table s2 matches table s5, but table s5 fold changes does not match our reproduced values as good as the match for table s2.
 
-# The reason that the line is not as straight for the reproduce FC's for table s5 as for the mean expressions in table S2 is because of different scale in the plot and the fact that the small difference will be higher for a ratio (combining to values with a individual deviation from the tables.)
+The reason that the line is not as straight for the reproduce FC's for table s5 as for the mean expressions in table S2 is because of different scale in the plot and the fact that the small difference will be higher for a ratio (combining to values with a individual deviation from the tables.)
 
 ```r
 x = (meanDP - meanN)[table_s2$ID]
@@ -589,7 +558,7 @@ y = fc_table_s2
 plot(x, y , ylim=lim, xlim=lim, pch="." ,  xlab="reproduced", ylab="Table_S2", main="FC comparison") # perfect match.
 ```
 
-![plot of chunk unnamed-chunk-17](figure/unnamed-chunk-17.png) 
+![plot of chunk unnamed-chunk-18](figure/unnamed-chunk-18.png) 
 
 
 
@@ -661,584 +630,14 @@ ttest_p = apply(datamatrices[["real_combat_covariates"]], 1, function(x) {
 anova_p = apply(datamatrices[["real_combat_covariates"]], 1, function(x) {
     summary(aov(x[DP | N] ~ sampleannotation$covariate[DP | N]))[[1]][1, 5]
 })  # aov er kanskje feil for dette, Er ikke live mange pr?ver i guppene.
-wilcoxon_p = apply(datamatrices[["real_combat_covariates"]], 1, function(x) {
-    wilcox.test(x[sampleannotation$covariate == "DP"], x[sampleannotation$covariate == 
-        "N"])$p.value
-})
-```
 
-```
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
-## Warning: cannot compute exact p-value with ties
+# wilcox.test gives a few hundred warnings for ties.  Warning: cannot
+# compute exact p-value with ties
+wilcoxon_p = suppressWarnings(apply(datamatrices[["real_combat_covariates"]], 
+    1, function(x) {
+        wilcox.test(x[sampleannotation$covariate == "DP"], x[sampleannotation$covariate == 
+            "N"])$p.value
+    }))
 ```
 
 
@@ -1251,7 +650,7 @@ plot(log10(table_s5$anova_p), log10(anova_p[table_s5$Probe]), pch=".", main="ano
 plot(log10(table_s5$wilcoxon_p), log10(wilcoxon_p[table_s5$Probe]), pch=".", main="wilcoxon p")
 ```
 
-![plot of chunk unnamed-chunk-21](figure/unnamed-chunk-21.png) 
+![plot of chunk unnamed-chunk-22](figure/unnamed-chunk-22.png) 
 
 # The p-values does not make a straight line, but they are low. But maybe all are low?
 
@@ -1273,7 +672,7 @@ hist(wilcoxon_p[table_s5$Probe], border=thiscolors[2], add=T, breaks=100)
 legend("topright", legend=c("all probes", "S5 probes"), text.col=thiscolors)
 ```
 
-![plot of chunk unnamed-chunk-22](figure/unnamed-chunk-22.png) 
+![plot of chunk unnamed-chunk-23](figure/unnamed-chunk-23.png) 
 
 
 

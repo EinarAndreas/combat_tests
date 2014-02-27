@@ -66,7 +66,9 @@ table(sampleannotation[sampleannotation$covariate %in% c("DP", "N"),
 
 > The microarray data have been deposited in the Gene Expression Omnibus, under accession number [GSE40566](http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE40566)
 
-The processed data from the above GEO deposit was deposited for another publication which did not processes the data as described in Towfic et al. (personal communication). The files linked to as [GSE40566_RAW.tar](http://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE40566&format=file) and [GSE40566_non_normalized.txt.gz](http://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE40566&format=file&file=GSE40566%5Fnon%5Fnormalized%2Etxt%2Egz) were thus used, although it is not confirmed that this is the version of the data actually used in Towfic et al.
+The processed data from the above GEO deposit was from another publication which did not processes the data as described in Towfic et al. (personal communication). The lesser processed linked to as [GSE40566_non_normalized.txt.gz](http://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE40566&format=file&file=GSE40566%5Fnon%5Fnormalized%2Etxt%2Egz) in the supplementary data was thus used in this report, although it is not confirmed that this is the version of the data actually used in Towfic et al.
+
+Probe annotation was also found in the supplementary data as [GSE40566_RAW.tar](http://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE40566&format=file).
 
 A recap of the important input files used in this report:
 - **sampleannotation.csv** holds the important sample/batch/covariate assignment. Compiled based on inforamtion in Towfic et al, the geo deposit and personal communication.
@@ -160,6 +162,8 @@ table_s5$Fold_Change = as.numeric(table_s5$Fold_Change)
 
 ### Reproduce the original results
 
+Or at least some of it.
+
 > Starting with background-corrected bead-level signals, we quantile normalized the extracted data for all samples across all 46,547 probes via the “preprocessCore” package in R.
 
 ```{r}
@@ -207,11 +211,9 @@ foldchange_RS_vs_M = meanRS - meanM
 foldchange_RS_vs_M = foldchange_RS_vs_M[meanM>6 | meanRS>6]
 top1000_RS_vs_M = names(foldchange_RS_vs_M[order(abs(foldchange_RS_vs_M), decreasing=TRUE)])[1:1000]
 table(table_s2$ID %in% top1000_RS_vs_M) #  851 out of 909. For some reason it is not a 100% match.
-
-#notin =!(table_s2$ID %in% top1000_RS_vs_M)
-#notinnames = table_s2$ID[notin]
-#cbind(table_s2[notin,], meanRS[notinnames], meanM[notinnames], FC=meanRS[notinnames]-meanM[notinnames])
 ```
+Out of Table S2's **`r nrow(table_s2)`** probes, **`r sum(table_s2$ID %in% top1000_RS_vs_M)`** were reproduced. Scatter plots of the actual values shows a correlation.
+
 ```{r reproduced_tables2, dev='png', fig.width=8, fig.height=8, fig.show='hold', tidy=FALSE}
 # scatter plot correlation of the 4 columns in table_S2 vs. the reproduced numbers. String correlation.
 par(mfrow=c(2, 2))
@@ -228,7 +230,7 @@ The numbers in Table S2 is almost reproduced.
 
 > In order to identify probes with variability induced specifically by activation (as opposed to experimental noise), we sought to identify probes that were significantly more variable when activated with either GA or generic than medium. Using an F-test, we compared GA against Medium for each probe and compared generic against Medium. We then took the set of probes where either treatment comes up to be more variable than medium (union, passes in at least at least one). For those set of probes only, we compared the variability of GA across 34 samples representing 30 batches, to the variability of generic across 11 samples representing 5 batches, utilizing an F-test to measure significance of the differences between the probes.<cite> Methods, Towfic et al.
 
-There is not description of what was used as a significance threshold here, but for the Identification of differentially expressed genes (TAble S5) a 0.05 FDR cut-off.
+There is no description of what was used as a significance threshold in this table, but for the Identification of differentially expressed genes (Table S5), a FDR cut-off of 0-05 was applied.
 
 ```{r}
 pvalsN=apply( datamatrices[["real_combat_covariates"]], 1, 
@@ -262,44 +264,62 @@ hist(pvalsDP,
      breaks=100, border="blue", add=T)
 
 ```
-The probes from Table S3 are at least enriched for low p-values. A more detailed explanation is needed for a better reproducablity.
-
+The probes from Table S3 are at least enriched for low p-values. A more detailed explanation is needed for a better reproduction.
 
 
 **Table S4**
 
-```{r}
-  # Table s4
-# "Ranked list of probes by ratio of the variance in generic-activated samples to the variance in GA-activated samples."
-# "Thus, we calculated for each probe the ratio of the variance in generic to the variance in GA"
+> Ranked list of probes by ratio of the variance in generic-activated samples to the variance in GA-activated samples.<cite> Figure text, Towfic et al.
 
-# do a f-test between  N and DP. Correlate with table s4.
+> Thus, we calculated for each probe the ratio of the variance in generic to the variance in GA
+
+```{r}
+# Table s4
 # f-test statistic is the same as ratio of variance?
 fstatistics=apply( datamatrices[["real_combat_covariates"]], 1, 
               function(x) { var.test(x[sampleannotation$covariate=="N"], x[sampleannotation$covariate=="DP"],  
                                      alternative="greater")$statistic } )
 fstatistics = fstatistics[order(fstatistics, decreasing=TRUE)]
 table(names(fstatistics)[1:100] %in% table_s4$Probe) # not a complete reproduction.
-# look at the f-statistic for the probes found in table_s3 vs all f-statistics
 ```
+Out of Table S4's **`r nrow(table_s4)`** probes, **`r sum(names(fstatistics)[1:100] %in% table_s4$Probe)`** were reproduced. 
 
 ```{r reproduced_table_s4, dev='png', fig.width=8, fig.height=8, fig.show='hold', tidy=FALSE}
 par(mfrow=c(2, 1))
-plot(table_s4[,3], fstatistics[table_s4$Probe], main="F-statitics from table S4 vs. reproduced")
+plot(table_s4[,3], fstatistics[table_s4$Probe], main="F-statistic from table S4 vs. reproduced")
 thiscolors = c("black", "red")
-plot(density(fstatistics), col=thiscolors[1], main="Reproduced F-statistics for N vs. DP")
-lines(density(fstatistics[table_s4$Probe]), col=thiscolors[2])
+hist(fstatistics, breaks=100, freq=F, border=thiscolors[1], main="Reproduced F-statistic for N vs. DP")
+hist(fstatistics[table_s4$Probe], breaks=100, add=T, freq=F, border=thiscolors[2])
 legend("topright", legend=c("All probes", "Table S4 probes"), text.col=thiscolors)
+
+hist(fstatistics[table_s4$Probe], breaks=100, add=F, freq=T, border=thiscolors[2])
 ```
+The scatter plots of the values shows a weak correlation, but they are all high. And the histogram shows that the probes from Table S4 all have a high reproduced F-statistic compared to the overall.
 
 **Table S5**
+> Comparison of expression in GA to expression in GA for each probe, including fold change, ANOVA, LIMMA with background subtraction, comparative marker selection by signal-to-noise ratio, comparative marker selection by t-test, and the Wilcoxon non-parametric method. <cite> Figure text, Towfic et al.
 
-
-
+How this fold change was calculated is not explained. A common way is to take the difference of geometric means that were calculated for Table S2 above.
 ```{r dev='png', fig.width=8, fig.height=8, fig.show='hold', tidy=FALSE}
-# Table s5
-#"Comparison of expression in GA to expression in GA for each probe, including fold change, ANOVA, LIMMA with background subtraction, comparative marker selection by signal-to-noise ratio, comparative marker selection by t-test, and the Wilcoxon non-parametric method."
-#"Finally, genes that have significantly higher expression in samples activated by generic than in samples activated by GA by 4 different parametric methods (Table S5)"
+foldchange_DP_N = meanDP - meanN
+
+ # make the axis equal.
+lim =c( min(   c(min(table_s5$Fold_Change), min(foldchange_DP_N[table_s5$Probe]))  ), 
+        max( c(max(table_s5$Fold_Change), max(foldchange_DP_N[table_s5$Probe])) ))
+
+# plot
+plot(table_s5$Fold_Change, foldchange_DP_N[table_s5$Probe],
+     ylim=lim, xlim=lim, pch=".", xlab="Table_S5", ylab="reproduced",
+     main="FC comparison")
+
+```
+The plot reveals that the reproduced fold changes are much more compressed than the ones in Table S5.
+There seems to two linear relationship, one for neagtive FC's and another for positve FC's. They seems to have different intercepts but comparable slope.
+The methods part is more specific;
+>  First, we computed the statistical significance of differential expression between treatments using the Analysis of Variance (ANOVA) method for each probe [21], adjusting for multiple hypothesis testing using the Benjamini-Hochberg False Discovery Rate (FDR) correction [22].
+
+
+
 #"Probes with Fold Change <  1.10 notdisplayed"
 
 # Table s5 seems to be a comparison of expression in  GA (drug product) vs. generic (N) , listing the probes with greatest fold change (>abs(1.1)??) and the p-value calculated by several different tests. There seems to be no description of how the fold-change was calculated and after an inspection they look weird.
