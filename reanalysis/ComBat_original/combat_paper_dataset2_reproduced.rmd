@@ -216,7 +216,6 @@ thismat = EB3[negativeprobesfilter, ]
 thismat[thismat<1]=1
 thismat=normalizeBetweenArrays(log2(thismat))
 Type = as.factor(sampleannotation$Type)
-Block = as.factor(sampleannotation$Batch)
 design = model.matrix(~0 + Type)
 fit = lmFit(thismat, design)
 cont.matrix = makeContrasts ( contrasts="TypeR-TypeC", levels=design)  
@@ -249,8 +248,8 @@ table( rank(datamatrix_limma_res$p.value[,1])  <=1000 &
 ```
 Our conclusion is that for this study the error introduced by the use of ComBat would probably have a modest effect on the final result.
 
-Additional sanity checks
----------
+### Additional sanity checks
+
 To substantiate that the result from the use of ComBat is less trustworthy than the alternative analysis we provide a few additional sanity checks.
 
 First we use random numbers drawn from the same distribution regardless of batch or covariate but retaining the batch/covariate design.
@@ -431,6 +430,3 @@ sessionInfo()
 
 generation ended `r as.character(Sys.time())`. Time spent `r  as.integer(round(difftime(Sys.time(),starttime, units="mins")))` minutes .
 
-table(sampleannotation[ sampleannotation$Batch!="3", c("Batch", "Cell")]  )
-table(Batch45_annot[, c("Batch", "Cell")])
-table(sampleannotation[, c("Batch", "Cell")])

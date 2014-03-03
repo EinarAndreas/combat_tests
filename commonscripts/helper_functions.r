@@ -92,7 +92,8 @@ getdifftab_limma = function(edata, condition,  contrast, block=NULL, threshold=0
 	if(!is.null(block))
 	{
 		block = as.factor(block)
-		design <- model.matrix(~block+fac)
+		#design <- model.matrix(~block+fac)
+		design = model.matrix(~0+fac+block)
 	}
 	colnames(design)=make.names(colnames(design))
 	#contrast = paste(unique(sa$treatment)[1], "-", unique(sa$treatment)[2], sep="")
@@ -101,18 +102,14 @@ getdifftab_limma = function(edata, condition,  contrast, block=NULL, threshold=0
 	contrast = paste("fac", contrast, sep="")
 	contrast = sub("-", "-fac", contrast)
 	cont.matrix = makeContrasts ( contrasts=contrast, levels=design)	
-	fit2 = contrasts.fit(fit, cont.matrix)
-		
-	#fit <- eBayes(fit)
-	#topTable(fit, coef="facM")
-	
-	fit2 <- eBayes(fit2)
-	#topTable(fit2)	
-	ret = data.frame(gene=names(fit2$Amean), p=fit2$p.value[,1], padjusted=p.adjust(fit2$p.value[,1] , method="fdr"), fc=fit2$coefficients[,1], stringsAsFactors=FALSE)
+	fit2 = contrasts.fit(fit, cont.matrix)	
+	fit2 <- eBayes(fit2)	
+	ret = data.frame(gene=names(fit2$Amean), 
+                   p=fit2$p.value[,1], 
+                   padjusted=p.adjust(fit2$p.value[,1] , method="fdr"),
+                   fc=fit2$coefficients[,1],
+                   stringsAsFactors=FALSE)
 	dimnames(ret)[[1]] = ret$gene 
-	# non eBayes
-	#nonbayestab=toptable(fit2, number=9999999)[names(fit2$Amean),]	
-	#ret = data.frame(gene=names(fit2$Amean), p=nonbayestab[,"P.Value"], padjusted=p.adjust(nonbayestab$P.Value , method="fdr"), fc=fit2$coefficients[,1])
 	return(ret)
 }
 
