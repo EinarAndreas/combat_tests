@@ -285,3 +285,6 @@ shufflesamplesinbatch = function(samplenames, batch, covariate, shufflecovariate
 	}
 	return(ret)
 }
+
+
+

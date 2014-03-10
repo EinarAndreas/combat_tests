@@ -156,7 +156,7 @@ Towfic et al. performed many different test on the data and it proved difficult 
 
 ```{r}
 datamatrices = list()
-datamatrices[["real_raw"]] = datamatrix_raw#[1:1000,]
+datamatrices[["real_raw"]] = datamatrix_raw#[1:1000,] # debug
 
 # used in paper, but seems to do the same as the limma version. Except it loses dimnames
 datamatrices[["real_qnorm"]] = normalize.quantiles(datamatrices[["real_raw"]]) 
@@ -228,8 +228,8 @@ How the fold change was calculated is not explained. A common way is to take the
 foldchange_DP_N = meanDP - meanN
 
  # make the axis equal.
-lim =c( min(   c(min(table_s5$Fold_Change), min(foldchange_DP_N[table_s5$Probe]))  ), 
-        max( c(max(table_s5$Fold_Change), max(foldchange_DP_N[table_s5$Probe])) ))
+lim =c( min(   c(min(table_s5$Fold_Change, na.rm=T), min(foldchange_DP_N[table_s5$Probe], na.rm=T))  ), 
+        max( c(max(table_s5$Fold_Change, na.rm=T), max(foldchange_DP_N[table_s5$Probe], na.rm=T)) ))
 
 # plot
 plot(table_s5$Fold_Change, foldchange_DP_N[table_s5$Probe],
@@ -552,17 +552,18 @@ The p-value plots from the ComBat adjusted random data shows a skewed distributi
 Another sanity check is by permuting the DP and N labels and look how the result changes. In order to retain the batch effect we will only swap labels within a batch. This should in theory give fewer significant probes.
 
 ```{r}
-shufflesamplesinbatch = function(samplenames, batch, covariate, shufflecovariates)
-{
-  ret = samplenames
-	b = covariate %in% shufflecovariates
-	for(thisbatch in unique(batch))
-	{
-		a = batch== thisbatch		
-		ret[a & b] = sample( samplenames[a&b],sum(a&b),  replace=FALSE)		
-	}
-	return(ret)
-}
+source("../../commonscripts/helper_functions.r")
+#shufflesamplesinbatch = function(samplenames, batch, covariate, shufflecovariates)
+#{
+  #ret = samplenames
+	#b = covariate %in% shufflecovariates
+	#for(thisbatch in unique(batch))
+	#{
+	#	a = batch== thisbatch		
+#		ret[a & b] = sample( samplenames[a&b],sum(a&b),  replace=FALSE)		
+	#}
+	#return(ret)
+#}
 
 nshuffleddatasets = 10
 datamatrices_permuted = list()
@@ -604,6 +605,44 @@ for(i in 1:length(permuted_pvalcounts))
 }
 legend("topright", legend=c("Reproduced p-values real labels", "Permuted DP and N labels"), text.col=c("red", "blue"))
 ```
+
+
+
+
+
+Forslag figur brukt i artikkel.
+```{r pvaluestowfic, dev='svg', fig.width=10, fig.height=10, tidy=FALSE}
+# figure used in our article
+# NB! bruker orgniale data som ikke er floored eller log2!
+par(mfrow=c(2, 2))
+
+thisylim = c(0, max(unlist( c(permuted_pvalcounts,real_pvalcounts))))
+# reproduced ComBat + limma
+hist(limma_p_alt, main="P-values, real data, ComBat followed by Limma", breaks=100, xlab="p-value", ylim=thisylim)
+
+# batch handled in limma
+hist(limma_p_woc, breaks=100, main="P-values, real data, batch handled by Limma", xlab="p-value" , ylim=thisylim)
+
+# random ComBat + limma
+hist(limma_p_rand, main="P-values, Random data, ComBat followed by Limma", breaks=100, xlab="p-value" , ylim=thisylim)
+
+# permuted labels whitin batch
+
+### permutation sanity test
+real_pvalcounts=hist(limma_p_alt, plot=FALSE, breaks=100)$counts
+plot((1:20)/100, real_pvalcounts[1:20], col="red",
+     main=paste("P-values, real data and ", length(permuted_pvalcounts), " permutations" ,sep=""),
+      xlab="p-value", ylab="Frequency", type="l", lwd=2, 
+      ylim=thisylim)
+for(i in 1:length(permuted_pvalcounts))
+{
+  lines((1:20)/100,permuted_pvalcounts[[i]][1:20], col="blue")
+}
+legend("topright", legend=c("Reproduced p-values real labels", "Permuted DP and N labels"),
+       text.col=c("red", "blue"))
+```
+
+
 ### References
 
 

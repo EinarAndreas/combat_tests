@@ -221,7 +221,7 @@ fit = lmFit(thismat, design)
 cont.matrix = makeContrasts ( contrasts="TypeR-TypeC", levels=design)  
 fit2 = contrasts.fit(fit, cont.matrix)
 EB3_limma_res = eBayes(fit2)
-rm(thismat, Type, Block, design, fit, cont.matrix, fit2)
+rm(thismat, Type, design, fit, cont.matrix, fit2)
 print(table(qvalue(EB3_limma_res$p.value[,1])$qvalue<0.05))
 
 ```
@@ -393,7 +393,67 @@ legend("topright", legend=c("ComBat adjusted fictive-batches of batch 3", "Batch
 ```
 
 
+```{r}
+source("../../commonscripts/helper_functions.r")
+nshuffleddatasets = 10
+datamatrices_permuted = list()
+for(i in 1:nshuffleddatasets)
+{
+  x = shufflesamplesinbatch( rownames(sampleannotation), sampleannotation$Batch, sampleannotation$Type, c("C", "R") )
+  print(  sum(sampleannotation[,"Type"] != sampleannotation[x,"Type"]  ))  # see how many changed
+  datamatrices_permuted[[i]] = as.matrix(ComBat(dat=datamatrix[, x], 
+                                                batch=sampleannotation$Batch, 
+                                                mod=model.matrix(~as.factor(sampleannotation[colnames(datamatrix),"Type"])),  
+                                                numCovs=NULL, 
+                                                par.prior=TRUE, 
+                                                prior.plots=FALSE))
+}
 
+permuted_pvalcounts=list()
+for(i in 1:nshuffleddatasets)
+{ 
+  this_p = apply(datamatrices_permuted[[i]], 1 , 
+                  FUN=function(x){t.test(
+                                    x[sampleannotation[, "Type"]=="C"],
+                                    x[sampleannotation[, "Type"]=="R"]
+                                    )$p.value})
+
+  permuted_pvalcounts[[i]] = hist(this_p, plot=FALSE, breaks=100)$counts
+  print(table(p.adjust(this_p, method="fdr")<0.05))
+}
+```
+
+
+Forslag figur brukt i artikkel.
+```{r pvaluesjohnson, dev='svg', fig.width=10, fig.height=10, tidy=FALSE}
+# figure used in our article
+# NB! bruker orgniale data som ikke er floored eller log2!
+par(mfrow=c(2, 2))
+
+# reproduced ComBat + limma
+hist(EB3_limma_res$p.value[,1], main="P-values, real data, ComBat followed by Limma", breaks=100, xlab="p-value", ylim=c(0,3000))
+
+# batch handled in limma
+hist(datamatrix_limma_res$p.value[,1], breaks=100, main="P-values, real data, batch handled by Limma", xlab="p-value" , ylim=c(0,3000))
+
+# random ComBat + limma
+hist(EBrand_limma_pvalues, main="P-values, Random data, ComBat followed by Limma", breaks=100, xlab="p-value" , ylim=c(0,3000))
+
+# permuted labels whitin batch
+
+### permutation sanity test
+real_pvalcounts=hist(EB3_limma_res$p.value[,1], plot=FALSE, breaks=100)$counts
+plot((1:20)/100, real_pvalcounts[1:20], col="red",
+     main=paste("P-values, real data and ", length(permuted_pvalcounts), " permutations" ,sep=""),
+      xlab="p-value", ylab="Frequency", type="l", lwd=2, 
+      ylim=c(0, max(unlist( c(permuted_pvalcounts,real_pvalcounts)))))
+for(i in 1:length(permuted_pvalcounts))
+{
+  lines((1:20)/100,permuted_pvalcounts[[i]][1:20], col="blue")
+}
+legend("topright", legend=c("Reproduced p-values real labels", "Permuted C and R labels"),
+       text.col=c("red", "blue"))
+```
 
 
 ### References
