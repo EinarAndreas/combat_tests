@@ -196,9 +196,11 @@ P-value distribution for the main comparison in (data set 2 16632515) for  </p>
 <li>d) 10 runs of real data with the group labels permuted within batches, followed by ComBat adjustment and significance test in limma. </li>
 </ul>
 
+<p>3) Her kan vi fylle paa med flere eksempler etter samme mal hvis det trengs. Feks en fersk artikkel fra Nature Genetic(<a href="http://www.nature.com/ng/journal/vaop/ncurrent/full/ng.2916.html">24584070</a>). Der har de kombinert sekvenseringsdata  (deres data) fra 9 lymfom pasienter med et (eksternt) microarray data set som har 6 lymfom proever og 5 kontroller, dvs kontroll gruppen er helt fravaerende hos dem. Dvs veldig ubalansert (9/0, 6/5), MEN skille mellom phenotypene er saa stor at de sikkert hadde funnet omtrent de samme genene signifikante med aa bare bruke de balanserte dataene (men det var jo ikke deres.) Dette er ikke en viktig del av paperet, men det er veldig feil selvom konsekvensense ikke blir store. Dog gir det et falskt inntrykk av at dataene deres ligner tidligere data, se heatmap i suppl.. Dessuten lager de GO analyser av dette som egentlig er 7 aar gamle andres data og ikke deres</p>
+
 <h2>Discussion</h2>
 
-<h2>Sliding application area of ComBat</h2>
+<h2>Increased emphasis on preserving group difference</h2>
 
 <p>In the original ComBat article(2007) it is clear that the primary motivation behind ComBat was to employ an Emprical Bayes method for batch-effect removal. The feature of retaining group differences for unbalanced designs is optional and seems to be subordinate, only exemplified in the supplementary information. However, over the years this feature became more important judging from advice given by the author to users
 (
@@ -214,10 +216,9 @@ And when ComBat was incorporated in the sva package ( <a href="http://bioinforma
 <p>Our knowledge of ComBat came through a typical use case when trying to salvage unbalanced data which had batch effects. Upon realizing that the confidence on our group differences were exaggerated, the literature was searched for a better understanding of correct use and potential overseen limitations of ComBat. But the authors of ComBat and the sva package recommended our usage (16632515, 22257669). In addition, other works looking into the problem of batch effects were mostly recommending ComBat without much concern (22682473, 22133085). A brief inquiry into  some of the articles citing ComBat (574 Google Scholar) revealed few problems, and their method descriptions regarding ComBat were mostly sparse, limited to one or two sentences (24391845, 18414638, 21731603,23630272, 24584070). A further indication of their carefree use of this potentially devastating procedure was the frequent neglect to state the program parameters, i.e batch-labels (18414638, 21731603) or group labels (24391845, 18414638, 21731603, 23630272, 23482648, 24584070). Often no effort was done in order to substantiate the existence of batch effects in their data, except for stating the presence of batches (24391845?, 18414638, 21731603, 23630272). In one instance ComBat was even applied on data were effects due to batch were investigated, but not found (husker ikke ref). The incorporation of the method into analysis pipelines (16642009,TCGA) and other packages (23452776, 21937664) could make its usage even more trivial and parameters setting harder to perceive.
 Taken together we fear that many published results from data adjusted by ComBat are completely or partially false. And knowing that scientist don&#39;t give up when one analysis fails, a method that almost ensures a result given a sufficiently unbalanced design will continue to be used.</p>
 
-<pre><code>## [1] &quot;\n\nMange siteringer\nI pipelines 16642009,TCGA  pakker.   23452776, 21937664\nrecomondations, review vinnere. 22682473, 22133085\nmangelfull forstaaelse fra forfattere. 16632515, 22257669\nFaa setninger, 24391845, 18414638, 21731603,23630272, 24584070\nikke oppgit parametere, dvs batch(18414638, 21731603) eller covariates(24391845, 18414638, 21731603, 23630272, 23482648, 24584070),\nIkke vist batch problem (24391845?, 18414638, 21731603, 23630272).\nBrukt uansett.\nP-hacking. Gjoer ComBat populaer.\n&quot;
-</code></pre>
+<h2>(Guide for &ldquo;worried&rdquo; scientist)</h2>
 
-<h2>Guide for &ldquo;worried&rdquo; scientist</h2>
+<p>We have shown that adjusting for batch effects while preserve the group difference may lead to varying degree of false results. Knowing this, to what degree can one trust a result  from a work applying such a method? Essentially, when the batch/group configuration is balanced, or group difference is ignored  (i.e. no group labels not given as parameters to ComBat), problems related to preserving group differences will not occur. For other cases, a re-analysis without using this approach is the most rigorous path. However, this thoroughness is not feasible if the downstream  analysis can not adjust for batch effects by it self. To reach a reliable result, batch effects need to be handled in some way or another. To make matters worse, a re-analysis relies on the availability of the raw data and a description of processing and analysis steps taken in the original work. If this is available, the necessary bioinformatic skills and work hours could still be in short supply. For such situations a superficial assessment could be performed, taking special note of batches were groups of interest are near missing and how likely a group difference is. In essence asking if the balanced parts of the data has enough power to detect the presumed effects and if this is the case, treat the results more like an ordered list with the most likely true positives on top,de-emphasizing the somewhat deflated p-values (16632515, 24584070). In contrast, if a group effect is a priori considered to be unlikely  (24391845, 18414638?, 21731603, 23630272), a intermediate lack of batch/group balance  could lead to a mostly false result.</p>
 
 <ol>
 <li>Gi en rettledning for hvordan en bekymret forsker kanskje kan
@@ -290,6 +291,11 @@ PMID: 24584070 [PubMed - as supplied by publisher]
 <a href="http://www.nature.com/ng/journal/vaop/ncurrent/full/ng.2916.html">http://www.nature.com/ng/journal/vaop/ncurrent/full/ng.2916.html</a>
 <a href="http://www.nature.com/ng/journal/vaop/ncurrent/extref/ng.2916-S1.pdf">http://www.nature.com/ng/journal/vaop/ncurrent/extref/ng.2916-S1.pdf</a>
 &ldquo;We combined the RNA-seq and microarray data using the Combat algorithm36 in the Bioconductor sva package to remove batch biases due to platform differences&rdquo;</p>
+
+<p>A recurrent inactivating mutation in RHOA GTPase in angioimmunoblastic T cell lymphoma.
+Yoo HY, Sung MK, Lee SH, Kim S, Lee H, Park S, Kim SC, Lee B, Rho K, Lee JE, Cho KH, Kim W, Ju H, Kim J, Kim SJ, Kim WS, Lee S, Ko YH.
+Nat Genet. 2014 Mar 2. doi: 10.1038/ng.2916. [Epub ahead of print]
+PMID: 24584070 [PubMed - as supplied by publisher]</p>
 
 <h2>anbefaler ComBat</h2>
 
