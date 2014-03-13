@@ -274,8 +274,10 @@ drawbatchbalanceddsamples = function(samplenames, batches, conditions)
 #covariate = sampleannotation$covariate1
 #shufflecovariates = c("N", "DP")
 # shuffle samples whithin a batch for selected covariates
-shufflesamplesinbatch = function(samplenames, batch, covariate, shufflecovariates)
+shufflesamplesinbatch = function(samplenames, batch, covariate, shufflecovariates=NULL)
 {
+  if(is.null(shufflecovariates))
+    shufflecovariates=unique(covariate)
 	ret = samplenames
 	b = covariate %in% shufflecovariates
 	for(thisbatch in unique(batch))
