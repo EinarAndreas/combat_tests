@@ -15,7 +15,7 @@ This document has five main parts
 - Reproduce some of the results to show that we are working on the same data and analysis workflow
 - Remove the use of ComBat and perform an similar analysis with alternative established tools
 - Estimate the error introduced by ComBat and the consequences for the conclusion of the study
-- Perform a few more sanity checks to substantiate that the difference in results for the two above analysis is mainly due to error introduced by ComBat
+- Perform a few more sanity checks to substantiate that the difference in results for the two above analysis is mainly introduced by ComBat
 
 
 ### Getting the data
@@ -26,14 +26,14 @@ includelibs = c("Biobase", "GEOquery", "sva", "limma",
                  "preprocessCore")
 lapply(includelibs, require, character.only=T)
 ```
-The important sample information is described in Table S1 from Towfic et al. the its usage in ComBat is described briefly in the methods;
+The important sample information is described in Table S1 from Towfic et al. and its usage in ComBat is described briefly in the methods;
 >  Each microarray’s chip designation was supplied a batch label; there were 18 batches in all. The labels for the treatments (i.e. drug product, reference standard…) were added as covariates.<cite> Towfic et al.
 
 Table S1 does have a "Chip"- coloumn, unfortunatly there is no dedicated "treatment"-coloumn.
 Communication with the corresponding author yielded this explanation
 > ..and the only thing we used as a covariate was the unique treatment names themselves (e.g. ³Medium² or ³RS").
 
-Based on these descriptions and the annotation for the GEO deposit, we compiled a more complete sample annotation file.
+Based on these descriptions and the annotation for the GEO deposit, we compiled a more complete sample annotation file (sampleannotation.csv).
 
 ```{r}
 sampleannotation = read.table("data/sampleannotation.csv", sep="\t", header=TRUE,  stringsAsFactors=FALSE)
@@ -42,7 +42,13 @@ sampleannotation$chip = as.character(sampleannotation$chip)
 dimnames(sampleannotation)[[1]] = sampleannotation$code
 head(sampleannotation)
 ```
-The "covariate"-coloumn is made based on the "code"-coloumn, but might not match  to what were actually used. The last two coloumns are from the GEO deposit and reveal that 3 of the samples do not have data and are taken out.
+The "covariate"-coloumn is made based on the "code"-coloumn, but might not match  to what were actually used for all samples. The last two coloumns are from the GEO deposit and reveal that 3 of the samples do not have data and are taken out.
+
+The nameing convention seeme to differ slightly between the Table S1 and the text in Towfic et al. This is our interpretation of covariate labels and its corresponding name in the text.
+- **DP** refferd to as GA (but not GA as in table S1)
+- **N** refferd to as "generic"
+- **M** reffered to as "medium"
+- **RS** reffered to as "reference standard""
 
 ```{r}
 # take out 3 samples that are not assign to a geoaccession. Failed QC?
@@ -50,26 +56,35 @@ sampleannotation = sampleannotation[!is.na(sampleannotation$geoaccession),]
 ```
 The batch/covariate design shows many batches and covariate groups.
 ```{r}
-# the batch/covariate design
 table(sampleannotation[, c("chip", "covariate")])
 ```
 A look at the most interesting groups, "DP"(drug product) and "N"(generic) reveals a lack of balance.
 ```{r}
-table(sampleannotation[sampleannotation$covariate %in% c("DP", "N"), c("chip", "covariate")])
+table(sampleannotation[sampleannotation$covariate %in% c("DP", "N"), 
+                       c("chip", "covariate")])
 ```
 
 > The microarray data have been deposited in the Gene Expression Omnibus, under accession number [GSE40566](http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE40566)
 
-The processed data from the above GEO deposit was deposited for another publication which did not processes the data as described in Tawfic et al. (personal communication). The raw data linked to as [GSE40566_RAW.tar](http://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE40566&format=file) and [GSE40566_non_normalized.txt.gz](http://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE40566&format=file&file=GSE40566%5Fnon%5Fnormalized%2Etxt%2Egz) were thus used, although it is not confirmed that this is the version of the data actually used in Towfic et al.
+The processed data from the above GEO deposit was from another publication which did not processes the data as described in Towfic et al. (personal communication). The lesser processed linked to as [GSE40566_non_normalized.txt.gz](http://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE40566&format=file&file=GSE40566%5Fnon%5Fnormalized%2Etxt%2Egz) in the supplementary data was thus used in this report, although it is not confirmed that this is the version of the data actually used in Towfic et al.
+
+Probe annotation was also found in the supplementary data as [GSE40566_RAW.tar](http://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE40566&format=file).
+
+A recap of the important input files used in this report:
+- **sampleannotation.csv** holds the important sample/batch/covariate assignment. Compiled based on inforamtion in Towfic et al, the geo deposit and personal communication.
+- **GSE40566_non_normalized.txt** the measurments in a sample vs probe matrix. From the [GEO deposit](http://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE40566&format=file&file=GSE40566%5Fnon%5Fnormalized%2Etxt%2Egz).
+- **GPL6887_MouseWG-6_V2_0_R3_11278593_A.txt** the probe annotation needed for the datarow to probe to gene matching. From the GEO deposit inside the [GSE40566_RAW.tar](http://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE40566&format=file).
+
+Reading the data.
 ```{r}
 # the output from Illumina software.
-rawdata = read.table("data/GSE40566_non_normalized.txt", sep="\t", header=TRUE, stringsAsFactors=FALSE)
+rawdata = read.table("not_in_github/GSE40566_non_normalized.txt", sep="\t", header=TRUE, stringsAsFactors=FALSE)
 
 # the probe annotation file found inside GSE40566_RAW.tar
-rawannotation = read.table("data/GPL6887_MouseWG-6_V2_0_R3_11278593_A.txt", sep="\t", header=TRUE, stringsAsFactors=FALSE, skip=8, comment.char="", quote="", fill=TRUE)
+rawannotation = read.table("not_in_github/GPL6887_MouseWG-6_V2_0_R3_11278593_A.txt", sep="\t", header=TRUE, stringsAsFactors=FALSE, skip=8, comment.char="", quote="", fill=TRUE)
 ```
 
-Then some formatting is needed to match the probe information to the measurments and the measurments to the sample information.
+Some formatting is needed to match the probe information to the measurments and the measurments to the sample information.
 ```{r}
 # annotation file has two separate tables, one for experimental and one at the end for controls.
 # splitting and fixing the tables:
@@ -104,10 +119,10 @@ dimnames(datamatrix_raw)[[1]] = probeannotation$Probe_Id
 datamatrix_raw = datamatrix_raw[, match(sampleannotation$code , dimnames(datamatrix_raw)[[2]])]
 ```
 
-Several tables with results are presented in the Supporting Information of in Tawfic et al. We are aiming to reproduce these. Unfortunatly these were only presented in a pdf-format not easely parsed by a computer. We had to resort to a ad-hoc method of cut-and-paste from pdf into text files which were somewhat polluted by pdf-formatting code. For some tables about 10% of the rows will be lost, but the rest will suffice.
+Several tables with results are presented in the Supporting Information in Towfic et al. We are aiming to reproduce these. Unfortunatly these were only presented in a pdf-format not easely parsed by a computer. We had to resort to a ad-hoc method of cut-and-paste from pdf into text files which were somewhat polluted by pdf-formatting code. For some tables about 10% of the rows will be lost, but the rest will suffice for our purpose.
 
 ```{r}
-
+# Table S2
 table_s2 = read.table("data/table_s2.csv", sep="\t", header=TRUE, stringsAsFactors=FALSE, fill=TRUE)
 table_s2 = as.matrix(table_s2)
 table_s2[,3:6] = as.numeric(table_s2[,3:6])
@@ -121,10 +136,11 @@ for(n in 3:6)
   table_s2[,n]=as.numeric(table_s2[,n])
 }
 
-
+# Table S3
 table_s3 = read.table("data/table_s3.csv", sep="\t", header=TRUE, stringsAsFactors=FALSE, fill=TRUE) 
 #one Probe, ("1770446" or "ILM_1770446") was not found in the data and was thus removed from this textfile
 
+# Table S4
 table_s4 = read.table("data/table_s4.csv", sep="\t", header=TRUE, stringsAsFactors=FALSE, fill=TRUE)
 #not able to copy-paste the pdf whitout a lot of gibberish clutter the data. Some probes are lost!
 a = is.na(as.numeric(table_s4$Var_generic_vs_Var_GA))
@@ -132,6 +148,7 @@ print(paste("Lost rows table s4: ", sum(a)))
 table_s4=table_s4[!a,]
 table_s4$Var_generic_vs_Var_GA = as.numeric(table_s4$Var_generic_vs_Var_GA)
 
+# Table S5
 table_s5 = read.table("data/table_s5.csv", sep="\t", header=TRUE, stringsAsFactors=FALSE, fill=TRUE)
 tmp = as.matrix(table_s5)
 tmp[,3:14] = as.numeric(tmp[,3:14])
@@ -145,26 +162,28 @@ table_s5$Fold_Change = as.numeric(table_s5$Fold_Change)
 
 ### Reproduce the original results
 
+Or at least some of it.
+
+> Starting with background-corrected bead-level signals, we quantile normalized the extracted data for all samples across all 46,547 probes via the “preprocessCore” package in R.
+
 ```{r}
-set.seed(100)
 datamatrices = list()
-datamatrices[["real_raw"]] = datamatrix_raw[1:5000,]
+datamatrices[["real_raw"]] = datamatrix_raw#[1:5000,]
 
 # used in paper, but seems to do the same as the limma version. Except it loses dimnames
 datamatrices[["real_qnorm"]] = normalize.quantiles(datamatrices[["real_raw"]]) 
 dimnames(datamatrices[["real_qnorm"]]) = dimnames(datamatrices[["real_raw"]])
+```
 
+> We then corrected for batch variation with ComBat [17] as implemented in the SVA package of R [18]. Each microarray’s chip designation was supplied a batch label; there were 18 batches in all. The labels for the treatments (i.e. drug product, reference standard…) were added as covariates. 
+
+```{r}
 mod = model.matrix(~as.factor(sampleannotation$covariate))
 mod0 = model.matrix(~1,data=sampleannotation)
 
 datamatrices[["real_combat_covariates"]]= as.matrix(ComBat(dat=datamatrices[["real_qnorm"]], batch=sampleannotation$chip, mod=mod, numCovs=NULL, par.prior=TRUE, prior.plots=FALSE))
 
 ```
-The nameing convention seeme to differ slightly between the Table S1 and the text. This is the covariate labels with its corresponging name in the text.
-- **DP** refferd to as GA (but not GA as in table S1)
-- **N** refferd to as "generic"
-- **M** reffered to as "medium"
-- **RS** reffered to as "reference standard""
 
 First we will try to reproduce Table S2.
 
@@ -192,11 +211,9 @@ foldchange_RS_vs_M = meanRS - meanM
 foldchange_RS_vs_M = foldchange_RS_vs_M[meanM>6 | meanRS>6]
 top1000_RS_vs_M = names(foldchange_RS_vs_M[order(abs(foldchange_RS_vs_M), decreasing=TRUE)])[1:1000]
 table(table_s2$ID %in% top1000_RS_vs_M) #  851 out of 909. For some reason it is not a 100% match.
-
-#notin =!(table_s2$ID %in% top1000_RS_vs_M)
-#notinnames = table_s2$ID[notin]
-#cbind(table_s2[notin,], meanRS[notinnames], meanM[notinnames], FC=meanRS[notinnames]-meanM[notinnames])
 ```
+Out of Table S2's **`r nrow(table_s2)`** probes, **`r sum(table_s2$ID %in% top1000_RS_vs_M)`** were reproduced. Scatter plots of the actual values shows a correlation.
+
 ```{r reproduced_tables2, dev='png', fig.width=8, fig.height=8, fig.show='hold', tidy=FALSE}
 # scatter plot correlation of the 4 columns in table_S2 vs. the reproduced numbers. String correlation.
 par(mfrow=c(2, 2))
@@ -205,16 +222,17 @@ plot(table_s2$AVG_Reference_Standard, meanRS[table_s2$ID], pch=".")
 plot(table_s2$AVG_GA, meanDP[table_s2$ID], pch=".")
 plot(table_s2$AVG_generic, meanN[table_s2$ID], pch=".")
 ```
-
+The numbers in Table S2 is almost reproduced.
 
 **Table S3**
 
+> The highly variable probes that were significant by F-test in either GA or generic (see methods section) and are depicted in Figure 1A.<cite> Figure text, Towfic et al.
+
+> In order to identify probes with variability induced specifically by activation (as opposed to experimental noise), we sought to identify probes that were significantly more variable when activated with either GA or generic than medium. Using an F-test, we compared GA against Medium for each probe and compared generic against Medium. We then took the set of probes where either treatment comes up to be more variable than medium (union, passes in at least at least one). For those set of probes only, we compared the variability of GA across 34 samples representing 30 batches, to the variability of generic across 11 samples representing 5 batches, utilizing an F-test to measure significance of the differences between the probes.<cite> Methods, Towfic et al.
+
+There is no description of what was used as a significance threshold in this table, but for the Identification of differentially expressed genes (Table S5), a FDR cut-off of 0-05 was applied.
+
 ```{r}
-#Table S3.
-#The highly variable probes that were significant by F-test in either GA or generic (see methods section) and are depicted in Figure 1A.   
-# MEthods: In order to identify probes with variability induced specifically by activation (as opposed to experimental noise), we sought to identify probes that were significantly more variable when activated with either GA or generic than medium. Using an F-test, we compared GA against Medium for each probe and compared generic against Medium. We then took the set of probes where either treatment comes up to be more variable than medium (union, passes in at least at least one). For those set of probes only, we compared the variability of GA across 34 samples representing 30 batches, to the variability of generic across 11 samples representing 5 batches, utilizing an F-test to measure significance of the differences between the probes.
-   
-# do a f-test between  DP and medium, and N and medium. And see what is "significant" (significance cut-off not noted in the text)?
 pvalsN=apply( datamatrices[["real_combat_covariates"]], 1, 
               function(x) { var.test(x[sampleannotation$covariate=="N"], x[sampleannotation$covariate=="M"],  
               alternative="greater")$p.value } )
@@ -227,68 +245,83 @@ print(table(padjustedN < 0.05))
 print(table(padjustedDP < 0.05))
 # nothing significant acording to 5%FDR that was used in the Differentially expressed genes tests.
 ```
+We are not able to reproduce this list. An alternative is to inspect the p-values for the probes in the list and see how they compare to the overall p-values.
 
 ```{r reproduced_tables3, dev='png', fig.width=8, fig.height=8, fig.show='hold', tidy=FALSE}
-# look at the pvalues for the probes found in table_s3
-thiscolors = c("black", "brown", "red", "blue")
-plot(density(pvalsN[table_s3$Probe[table_s3$Type=="generic"]]), col=thiscolors[3], main="P-values for F-test, N or DP vs. Medium")
-lines(density(pvalsN), col=thiscolors[1])
-lines(density(pvalsDP), col=thiscolors[2])
-lines(density(pvalsDP[table_s3$Probe[table_s3$Type=="GA"]]), col=thiscolors[4])
-legend("topright", legend=c("All probes, N vs. M", "All probes, DP vs. M", "Table S3 probes, N vs. M", "Table S3 probes, DP vs. M"), text.col=thiscolors)
-# The PRobes from table_s3 are at least enriched for low p-values.
-# But table_s3 is not fully reproduced. More detailed explanation is needed
-```
+par(mfrow=c(2, 1))
+thiscolors = c("red", "blue")
+hist( pvalsN[table_s3$Probe[table_s3$Type=="generic"]], 
+      breaks=100, border="red", 
+      main="P-values for F-test, Table S3 probes",
+      xlab="P-values")
+hist(pvalsDP[table_s3$Probe[table_s3$Type=="GA"]], 
+     breaks=100, border="blue", add=T)
+legend("topright", legend=c("N vs. M", "DP vs. M"), text.col=c("red", "blue"))
+hist( pvalsN, 
+      breaks=100, border="red", 
+      main="All probes", xlab="P-values")
+hist(pvalsDP, 
+     breaks=100, border="blue", add=T)
 
+```
+The probes from Table S3 are at least enriched for low p-values. A more detailed explanation is needed for a better reproduction.
 
 
 **Table S4**
 
-```{r}
-  # Table s4
-# "Ranked list of probes by ratio of the variance in generic-activated samples to the variance in GA-activated samples."
-# "Thus, we calculated for each probe the ratio of the variance in generic to the variance in GA"
+> Ranked list of probes by ratio of the variance in generic-activated samples to the variance in GA-activated samples.<cite> Figure text, Towfic et al.
 
-# do a f-test between  N and DP. Correlate with table s4.
+> Thus, we calculated for each probe the ratio of the variance in generic to the variance in GA
+
+```{r}
+# Table s4
 # f-test statistic is the same as ratio of variance?
 fstatistics=apply( datamatrices[["real_combat_covariates"]], 1, 
               function(x) { var.test(x[sampleannotation$covariate=="N"], x[sampleannotation$covariate=="DP"],  
                                      alternative="greater")$statistic } )
 fstatistics = fstatistics[order(fstatistics, decreasing=TRUE)]
 table(names(fstatistics)[1:100] %in% table_s4$Probe) # not a complete reproduction.
-# look at the f-statistic for the probes found in table_s3 vs all f-statistics
 ```
+Out of Table S4's **`r nrow(table_s4)`** probes, **`r sum(names(fstatistics)[1:100] %in% table_s4$Probe)`** were reproduced. 
 
 ```{r reproduced_table_s4, dev='png', fig.width=8, fig.height=8, fig.show='hold', tidy=FALSE}
 par(mfrow=c(2, 1))
-plot(table_s4[,3], fstatistics[table_s4$Probe], main="F-statitics from table S4 vs. reproduced")
+plot(table_s4[,3], fstatistics[table_s4$Probe], main="F-statistic from table S4 vs. reproduced")
 thiscolors = c("black", "red")
-plot(density(fstatistics), col=thiscolors[1], main="Reproduced F-statistics for N vs. DP")
-lines(density(fstatistics[table_s4$Probe]), col=thiscolors[2])
+hist(fstatistics, breaks=100, freq=F, border=thiscolors[1], main="Reproduced F-statistic for N vs. DP")
+hist(fstatistics[table_s4$Probe], breaks=100, add=T, freq=F, border=thiscolors[2])
 legend("topright", legend=c("All probes", "Table S4 probes"), text.col=thiscolors)
+
+#hist(fstatistics[table_s4$Probe], breaks=100, add=F, freq=T, border=thiscolors[2])
 ```
+The scatter plots of the values shows a weak correlation, but they are all high. And the histogram shows that the probes from Table S4 all have a high reproduced F-statistic compared to the overall.
 
 **Table S5**
+> Comparison of expression in GA to expression in GA for each probe, including fold change, ANOVA, LIMMA with background subtraction, comparative marker selection by signal-to-noise ratio, comparative marker selection by t-test, and the Wilcoxon non-parametric method. <cite> Figure text, Towfic et al.
 
+There must be a typo in the figure text, they ment "Comparison of expression in GA to expression in **generic** for each probe, ...".
 
+> To find differentially expressed probes between generic and GA, we utilized various statistical tests at the probe level and merged the results across the different methods. <cite> Towfic et al.
 
+How the fold change was calculated is not explained. A common way is to take the difference of geometric means that were calculated for Table S2 above.
 ```{r dev='png', fig.width=8, fig.height=8, fig.show='hold', tidy=FALSE}
-# Table s5
-#"Comparison of expression in GA to expression in GA for each probe, including fold change, ANOVA, LIMMA with background subtraction, comparative marker selection by signal-to-noise ratio, comparative marker selection by t-test, and the Wilcoxon non-parametric method."
-#"Finally, genes that have significantly higher expression in samples activated by generic than in samples activated by GA by 4 different parametric methods (Table S5)"
-#"Probes with Fold Change <  1.10 notdisplayed"
+foldchange_DP_N = meanDP - meanN
 
-# Table s5 seems to be a comparison of expression in  GA (drug product) vs. generic (N) , listing the probes with greatest fold change (>abs(1.1)??) and the p-value calculated by several different tests. There seems to be no description of how the fold-change was calculated and after an inspection they look weird.
+ # make the axis equal.
+lim =c( min(   c(min(table_s5$Fold_Change), min(foldchange_DP_N[table_s5$Probe]))  ), 
+        max( c(max(table_s5$Fold_Change), max(foldchange_DP_N[table_s5$Probe])) ))
 
-meanDP = rowMeans(thisdata[, sampleannotation$covariate=="DP"]) # DP is drug product also called GA
-meanN = rowMeans(thisdata[, sampleannotation$covariate =="N"]) # N is Natco the generic,  (or G for alternative covariates)
-
-# fold change between N and DP, calculated as geometric mean.
-x = table_s5$Fold_Change
-y = (meanDP - meanN)[table_s5$Probe]
-lim =c( min(   c(min(x), min(y))  ), max( c(max(x), max(y)) ))
-plot(x, y , ylim=lim, xlim=lim, pch=".", xlab="Table_S5", ylab="reproduced", main="FC comparison") # Not a perfect match. And the table_s5 numbers seems offset.
+# plot
+plot(table_s5$Fold_Change, foldchange_DP_N[table_s5$Probe],
+     ylim=lim, xlim=lim, pch=".", xlab="Table_S5", ylab="reproduced",
+     main="FC comparison")
+rm(lim)
 ```
+The plot reveals that the reproduced fold changes are much more compressed than the ones in Table S5.
+There seems to two linear relationship, one for neagtive FC's and another for positve FC's. They seems to have different intercepts but comparable slope.
+
+The average expression for "GA" (DP) and "generic" (N) are also given in Table S2. The fold change calculated from those numbers compared to the ones given in Table S5 shows a similar pattern:
+
 ```{r dev='png', fig.width=8, fig.height=8, fig.show='hold', tidy=FALSE}
 # table S2 has the AVG for both DP and N listed
 fc_table_s2 = table_s2$AVG_GA - table_s2$AVG_generic
@@ -296,39 +329,57 @@ names(fc_table_s2) = table_s2$ID
 x = table_s5$Fold_Change
 y = fc_table_s2[table_s5$Probe]
 lim =c( min(   c(min(x, na.rm=T), min(y, na.rm=T))  ), max( c(max(x, na.rm=T), max(y, na.rm=T)) ))
-plot(x, y , ylim=lim, xlim=lim, pch="." ,  xlab="Table_S5", ylab="Table_S2", main="FC comparison") # perfect match.
+plot(x, y , ylim=lim, xlim=lim, pch="." ,  xlab="Table_S5", ylab="Table_S2",
+     main="FC comparison, given values.") #  almost perfect match with offset.
+rm(x, y, lim, fc_table_s2)
 ```
-# But this is odd, we were able to reproduce table s2 and table s2 matches table s5, but table s5 fold changes does not match our reproduced values as good as the match for table s2.
+We are not able to reporduce the foldchanges fully.
 
-# The reason that the line is not as straight for the reproduce FC's for table s5 as for the mean expressions in table S2 is because of different scale in the plot and the fact that the small difference will be higher for a ratio (combining to values with a individual deviation from the tables.)
-```{r dev='png', fig.width=8, fig.height=8, fig.show='hold', tidy=FALSE}
-x = (meanDP - meanN)[table_s2$ID]
-y = fc_table_s2
-plot(x, y , ylim=lim, xlim=lim, pch="." ,  xlab="reproduced", ylab="Table_S2", main="FC comparison") # perfect match.
-```
+
+>  First, we computed the statistical significance of differential expression between treatments using the Analysis of Variance (ANOVA) method for each probe [21]...<cite> Towfic et al.
 
 ```{r}
-# Still there is a offset in the numbers.
-commonprobes = table_s5$Probe[table_s5$Probe %in% table_s2$ID]
-fc_table_s5 = table_s5$Fold_Change[match(commonprobes ,table_s5$Probe)]
-head(cbind(fc_table_s2[commonprobes], fc_table_s5, fc_table_s5-fc_table_s2[commonprobes], fc_table_s5/fc_table_s2[commonprobes]))
-# seems that some unacounted transformation has occured on the fold changes.
+anova_p = apply(datamatrices[["real_combat_covariates"]], 1,
+              function(x){ summary(aov(x[DP|N]~sampleannotation$covariate[DP|N]))[[1]][1,5]})
 ```
+
+> Next, we utilized Linear Models for Microarray (LIMMA) data analysis [23], [24] R package, part of the Bioconductor framework [25], to compare generic and GA samples, fitting a linear model that adjusts for fixed effect from medium (Effect = (GA-generic) – (generic-Medium)). The coefficients for the linear model were tested for significance using a modified t-test (taking into account standard deviation)...<cite> Towfic et al.
+
+The formula "Effect = (GA-generic) – (generic-Medium)" seems strange. A more standard way would be GA-generic.
+
 ```{r}
-source("../../commonscripts/helper_functions.r")
-getdifftab_limma
+group = factor(sampleannotation$covariate)
+design = model.matrix(~0 + group)
+fit = lmFit(datamatrices[["real_combat_covariates"]], design)
+cont.matrix = makeContrasts ( contrasts="(groupDP-groupN) - (groupN-groupM)", levels=design)  
+fit2 = contrasts.fit(fit, cont.matrix)
+limma_p_org = eBayes(fit2)$p.value
+
+cont.matrix = makeContrasts ( contrasts="groupDP-groupN", levels=design)  
+fit2 = contrasts.fit(fit, cont.matrix)
+limma_p_alt = eBayes(fit2)$p.value
 ```
+> In parallel, we used Comparative Marker Selection as implemented in GenePattern [26] to directly compare probes between generic and GA. We applied two separate techniques within this framework; a traditional T-test and a Signal-to-Noise Ratio test (SNR).
+
+The T-test is stright forward.
 ```{r}
-# reproduce the Nom P-value columns
-limma_ret= getdifftab_limma(edata=datamatrices[["real_combat_covariates"]], condition=sampleannotation[,"covariate"], contrast="DP-N" )
-limma_p = limma_ret$p
-names(limma_p) = limma_ret$gene
 DP = sampleannotation$covariate=="DP"
 N = sampleannotation$covariate=="N"
 ttest_p = apply(datamatrices[["real_combat_covariates"]], 1, function(x) { t.test(x[DP], x[N])$p.value } )
-anova_p = apply(datamatrices[["real_combat_covariates"]], 1, function(x){ summary(aov(x[DP|N]~sampleannotation$covariate[DP|N]))[[1]][1,5]}  )  # aov er kanskje feil for dette, Er ikke live mange pr?ver i guppene.
-wilcoxon_p = apply(datamatrices[["real_combat_covariates"]], 1, function(x) { wilcox.test(x[sampleannotation$covariate=="DP"], x[sampleannotation$covariate=="N"])$p.value } )
 ```
+
+> ...we used the Wilcoxon Rank Sum Test [27] as implemented in R ...
+
+```{r}
+# wilcox.test gives a few hundred warnings for ties:
+# Warning: cannot compute exact p-value with ties
+wilcoxon_p = suppressWarnings(apply(datamatrices[["real_combat_covariates"]], 1, 
+                                    function(x) { wilcox.test(x[sampleannotation$covariate=="DP"],
+                                                              x[sampleannotation$covariate=="N"])$p.value } )
+)
+```
+
+
 ```{r dev='png', fig.width=8, fig.height=8, fig.show='hold', tidy=FALSE}
 par(mfrow=c(2, 2))
 #plot(table_s5$Fold_Change, (meanDP - meanN)[table_s5$Probe] ,  ylim=c(-1.5,1.5), xlim=c(-1.5,1.5), pch=".", xlab="Table_S5", ylab="reproduced", main="FC comparison")

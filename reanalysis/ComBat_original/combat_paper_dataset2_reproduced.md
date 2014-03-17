@@ -5,7 +5,7 @@ Reproduction and alternative analysis of "Data Set 2" from "Adjusting batch effe
 
 
 
-2014-02-24 14:24:26
+2014-03-10 03:17:49
 
 ### Overview
 This report aims to show to what extent the use of ComBat led to false results in the second analysis example given in [Johnson et al.](http://biostatistics.oxfordjournals.org/content/8/1/118.abstract) The example named "Data Set 2" and the analysis are described in the [supplementary material](http://biostatistics.oxfordjournals.org/content/suppl/2006/04/21/kxj037.DC1/kxj037supp.pdf) for Johnson et al.
@@ -17,7 +17,7 @@ This document has four main parts
 - Remove the use of ComBat and perform the same analysis with an alternative established tool
 - Estimate the error introduced by ComBat and the consequences for the conclusion of the study
 - Perform a few more sanity checks to substantiate that the difference in results for the two above analysis is mainly due to error introduced by ComBat  
-      
+
         
 ### Read data and sample annotation
 The data files consist of 35 samples of which 5 are annotated as "WT" and were not
@@ -140,7 +140,7 @@ rm(variationmeasure, clustermatrix)
 Again the heatmap is not exactly as in Johnson et al, but the batch clustering is broken("Batch, bottom annotation row") and the samples cluster more by cell type("Cell", top annotation row) and treatment type("Type", middle annotation row).
 
 Now follows a few tests for differentially expressed probes.
-> Differential expression was assessed using Welch’s t-test to determine the differential expression of RNAi versus control samples. EB2 produced at list of 86 significant genes at a false discovery (q-value) threshold of 0.05 (Storey and Tibshirani, 2003).<cite> Johnson et al.
+> Differential expression was assessed using Welchs t-test to determine the differential expression of RNAi versus control samples. EB2 produced at list of 86 significant genes at a false discovery (q-value) threshold of 0.05 (Storey and Tibshirani, 2003).<cite> Johnson et al.
 
 
 ```r
@@ -203,7 +203,7 @@ print(table(qvalue(Batch12_pvals)$qvalue<0.05))
 
 Original number was **9**, reproduced number is **4**.
 
-> Welch’s t-test was also applied to EB3 to find differential expressed genes; yielding 1599 genes significant at a q-value cutoff of 0.05. <cite> Johnson et al.
+> Welchs t-test was also applied to EB3 to find differential expressed genes; yielding 1599 genes significant at a q-value cutoff of 0.05. <cite> Johnson et al.
 
 
 ```r
@@ -296,13 +296,12 @@ thismat = EB3[negativeprobesfilter, ]
 thismat[thismat < 1] = 1
 thismat = normalizeBetweenArrays(log2(thismat))
 Type = as.factor(sampleannotation$Type)
-Block = as.factor(sampleannotation$Batch)
 design = model.matrix(~0 + Type)
 fit = lmFit(thismat, design)
 cont.matrix = makeContrasts(contrasts = "TypeR-TypeC", levels = design)
 fit2 = contrasts.fit(fit, cont.matrix)
 EB3_limma_res = eBayes(fit2)
-rm(thismat, Type, Block, design, fit, cont.matrix, fit2)
+rm(thismat, Type, design, fit, cont.matrix, fit2)
 print(table(qvalue(EB3_limma_res$p.value[, 1])$qvalue < 0.05))
 ```
 
@@ -358,8 +357,8 @@ table( rank(datamatrix_limma_res$p.value[,1])  <=1000 &
 
 Our conclusion is that for this study the error introduced by the use of ComBat would probably have a modest effect on the final result.
 
-Additional sanity checks
----------
+### Additional sanity checks
+
 To substantiate that the result from the use of ComBat is less trustworthy than the alternative analysis we provide a few additional sanity checks.
 
 First we use random numbers drawn from the same distribution regardless of batch or covariate but retaining the batch/covariate design.
@@ -551,6 +550,176 @@ legend("topright", legend=c("ComBat adjusted fictive-batches of batch 3", "Batch
 
 
 
+```r
+source("../../commonscripts/helper_functions.r")
+nshuffleddatasets = 10
+datamatrices_permuted = list()
+for (i in 1:nshuffleddatasets) {
+    x = shufflesamplesinbatch(rownames(sampleannotation), sampleannotation$Batch, 
+        sampleannotation$Type, c("C", "R"))
+    print(sum(sampleannotation[, "Type"] != sampleannotation[x, "Type"]))  # see how many changed
+    datamatrices_permuted[[i]] = as.matrix(ComBat(dat = datamatrix[, x], batch = sampleannotation$Batch, 
+        mod = model.matrix(~as.factor(sampleannotation[colnames(datamatrix), 
+            "Type"])), numCovs = NULL, par.prior = TRUE, prior.plots = FALSE))
+}
+```
+
+```
+## [1] 12
+## Found 3 batches
+## Found 1  categorical covariate(s)
+## Standardizing Data across genes
+## Fitting L/S model and finding priors
+## Finding parametric adjustments
+## Adjusting the Data
+## [1] 14
+## Found 3 batches
+## Found 1  categorical covariate(s)
+## Standardizing Data across genes
+## Fitting L/S model and finding priors
+## Finding parametric adjustments
+## Adjusting the Data
+## [1] 18
+## Found 3 batches
+## Found 1  categorical covariate(s)
+## Standardizing Data across genes
+## Fitting L/S model and finding priors
+## Finding parametric adjustments
+## Adjusting the Data
+## [1] 12
+## Found 3 batches
+## Found 1  categorical covariate(s)
+## Standardizing Data across genes
+## Fitting L/S model and finding priors
+## Finding parametric adjustments
+## Adjusting the Data
+## [1] 18
+## Found 3 batches
+## Found 1  categorical covariate(s)
+## Standardizing Data across genes
+## Fitting L/S model and finding priors
+## Finding parametric adjustments
+## Adjusting the Data
+## [1] 14
+## Found 3 batches
+## Found 1  categorical covariate(s)
+## Standardizing Data across genes
+## Fitting L/S model and finding priors
+## Finding parametric adjustments
+## Adjusting the Data
+## [1] 12
+## Found 3 batches
+## Found 1  categorical covariate(s)
+## Standardizing Data across genes
+## Fitting L/S model and finding priors
+## Finding parametric adjustments
+## Adjusting the Data
+## [1] 16
+## Found 3 batches
+## Found 1  categorical covariate(s)
+## Standardizing Data across genes
+## Fitting L/S model and finding priors
+## Finding parametric adjustments
+## Adjusting the Data
+## [1] 14
+## Found 3 batches
+## Found 1  categorical covariate(s)
+## Standardizing Data across genes
+## Fitting L/S model and finding priors
+## Finding parametric adjustments
+## Adjusting the Data
+## [1] 8
+## Found 3 batches
+## Found 1  categorical covariate(s)
+## Standardizing Data across genes
+## Fitting L/S model and finding priors
+## Finding parametric adjustments
+## Adjusting the Data
+```
+
+```r
+
+permuted_pvalcounts = list()
+for (i in 1:nshuffleddatasets) {
+    this_p = apply(datamatrices_permuted[[i]], 1, FUN = function(x) {
+        t.test(x[sampleannotation[, "Type"] == "C"], x[sampleannotation[, "Type"] == 
+            "R"])$p.value
+    })
+    
+    permuted_pvalcounts[[i]] = hist(this_p, plot = FALSE, breaks = 100)$counts
+    print(table(p.adjust(this_p, method = "fdr") < 0.05))
+}
+```
+
+```
+## 
+## FALSE  TRUE 
+## 54673     2 
+## 
+## FALSE 
+## 54675 
+## 
+## FALSE 
+## 54675 
+## 
+## FALSE 
+## 54675 
+## 
+## FALSE 
+## 54675 
+## 
+## FALSE 
+## 54675 
+## 
+## FALSE 
+## 54675 
+## 
+## FALSE 
+## 54675 
+## 
+## FALSE 
+## 54675 
+## 
+## FALSE 
+## 54675
+```
+
+
+
+Forslag figur brukt i artikkel.
+
+```r
+# figure used in our article
+# NB! bruker orgniale data som ikke er floored eller log2!
+par(mfrow=c(2, 2))
+
+# reproduced ComBat + limma
+hist(EB3_limma_res$p.value[,1], main="P-values, real data, ComBat followed by Limma", breaks=100, xlab="p-value", ylim=c(0,2500))
+
+# batch handled in limma
+hist(datamatrix_limma_res$p.value[,1], breaks=100, main="P-values, real data, batch handled by Limma", xlab="p-value" , ylim=c(0,2500))
+
+# random ComBat + limma
+hist(EBrand_limma_pvalues, main="P-values, Random data, ComBat followed by Limma", breaks=100, xlab="p-value" , ylim=c(0,2500))
+
+# permuted labels whitin batch
+
+### permutation sanity test
+real_pvalcounts=hist(EB3_limma_res$p.value[,1], plot=FALSE, breaks=100)$counts
+plot((1:20)/100, real_pvalcounts[1:20], col="red",
+     main=paste("P-values, real data and ", length(permuted_pvalcounts), " permutations" ,sep=""),
+      xlab="p-value", ylab="Frequency", type="l", lwd=2, 
+      ylim=c(0, max(unlist( c(permuted_pvalcounts,real_pvalcounts)))))
+for(i in 1:length(permuted_pvalcounts))
+{
+  lines((1:20)/100,permuted_pvalcounts[[i]][1:20], col="blue")
+}
+legend("topright", legend=c("Reproduced p-values real labels", "Permuted C and R labels"),
+       text.col=c("red", "blue"))
+```
+
+![plot of chunk pvaluesjohnson](figure/pvaluesjohnson.svg) 
+
 
 
 ### References
@@ -588,28 +757,29 @@ sessionInfo()
 
 ```
 R version 3.0.2 (2013-09-25)
-Platform: x86_64-apple-darwin10.8.0 (64-bit)
+Platform: x86_64-w64-mingw32/x64 (64-bit)
 
 locale:
-[1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+[1] LC_COLLATE=English_United States.1252 
+[2] LC_CTYPE=English_United States.1252   
+[3] LC_MONETARY=English_United States.1252
+[4] LC_NUMERIC=C                          
+[5] LC_TIME=English_United States.1252    
 
 attached base packages:
 [1] stats     graphics  grDevices utils     datasets  methods   base     
 
 other attached packages:
-[1] limma_3.18.13  qvalue_1.36.0  sva_3.8.0      mgcv_1.7-28   
-[5] nlme_3.1-113   corpcor_1.6.6  pheatmap_0.7.7 knitr_1.5     
+[1] RColorBrewer_1.0-5 limma_3.18.12      qvalue_1.36.0     
+[4] sva_3.8.0          mgcv_1.7-28        nlme_3.1-113      
+[7] corpcor_1.6.6      pheatmap_0.7.7     knitr_1.5         
 
 loaded via a namespace (and not attached):
- [1] codetools_0.2-8    digest_0.6.4       evaluate_0.5.1    
- [4] formatR_0.10       grid_3.0.2         lattice_0.20-24   
- [7] Matrix_1.1-2       RColorBrewer_1.0-5 stringr_0.6.2     
-[10] tcltk_3.0.2        tools_3.0.2       
+ [1] codetools_0.2-8 digest_0.6.4    evaluate_0.5.1  formatR_0.10   
+ [5] grid_3.0.2      lattice_0.20-24 Matrix_1.1-2    stringr_0.6.2  
+ [9] tcltk_3.0.2     tools_3.0.2    
 ```
 
 
-generation ended 2014-02-24 14:34:18. Time spent 10 minutes .
+generation ended 2014-03-10 03:31:23. Time spent 14 minutes .
 
-table(sampleannotation[ sampleannotation$Batch!="3", c("Batch", "Cell")]  )
-table(Batch45_annot[, c("Batch", "Cell")])
-table(sampleannotation[, c("Batch", "Cell")])

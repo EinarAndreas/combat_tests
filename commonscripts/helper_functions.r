@@ -44,17 +44,17 @@ addbatcheffect = function(df, batches, thismean=1, thissd=1)
 }
 
 # 
-addconditioneffect = function(df, conditions, ndiffgenes, thismean=1, betweensd=1, insidesd=1)
+addconditioneffect = function(df, labels, ndiffgenes, thismean=1, betweensd=1, insidesd=1, affectedconditions)
 {
 	ret = df
 	if(ndiffgenes>0)
 	{
-		for(i in 1:length(unique(conditions)))
+		for(i in 1:length(affectedconditions))
 		{
 			for(s in 1:ndiffgenes)
 			{
-				thisgeneseffect = rnorm(thismean, sd=betweensd)
-				a=conditions==conditions[i]
+				thisgeneseffect = rnorm(1, thismean, sd=betweensd)
+				a=labels==affectedconditions[i]
 				#ret[s, a] = ret[s, a]+ rnorm(length(ret[s, a]), mean=thisgeneseffect)		
 				ret[s, a] = rnorm(length(ret[s, a]), mean=thisgeneseffect, sd=insidesd)		
 			}
@@ -87,12 +87,13 @@ getdifftab_sva = function(edata, sa, mod, threshold=0.05)
 getdifftab_limma = function(edata, condition,  contrast, block=NULL, threshold=0.05)
 {
 	require(limma)
-	fac = as.factor(condition)	
+	fac = factor(condition)	
 	design = model.matrix(~0 + fac)
 	if(!is.null(block))
 	{
 		block = as.factor(block)
-		design <- model.matrix(~block+fac)
+		#design <- model.matrix(~block+fac)
+		design = model.matrix(~0+fac+block)
 	}
 	colnames(design)=make.names(colnames(design))
 	#contrast = paste(unique(sa$treatment)[1], "-", unique(sa$treatment)[2], sep="")
@@ -101,18 +102,14 @@ getdifftab_limma = function(edata, condition,  contrast, block=NULL, threshold=0
 	contrast = paste("fac", contrast, sep="")
 	contrast = sub("-", "-fac", contrast)
 	cont.matrix = makeContrasts ( contrasts=contrast, levels=design)	
-	fit2 = contrasts.fit(fit, cont.matrix)
-		
-	#fit <- eBayes(fit)
-	#topTable(fit, coef="facM")
-	
-	fit2 <- eBayes(fit2)
-	#topTable(fit2)	
-	ret = data.frame(gene=names(fit2$Amean), p=fit2$p.value[,1], padjusted=p.adjust(fit2$p.value[,1] , method="fdr"), fc=fit2$coefficients[,1], stringsAsFactors=FALSE)
+	fit2 = contrasts.fit(fit, cont.matrix)	
+	fit2 <- eBayes(fit2)	
+	ret = data.frame(gene=names(fit2$Amean), 
+                   p=fit2$p.value[,1], 
+                   padjusted=p.adjust(fit2$p.value[,1] , method="fdr"),
+                   fc=fit2$coefficients[,1],
+                   stringsAsFactors=FALSE)
 	dimnames(ret)[[1]] = ret$gene 
-	# non eBayes
-	#nonbayestab=toptable(fit2, number=9999999)[names(fit2$Amean),]	
-	#ret = data.frame(gene=names(fit2$Amean), p=nonbayestab[,"P.Value"], padjusted=p.adjust(nonbayestab$P.Value , method="fdr"), fc=fit2$coefficients[,1])
 	return(ret)
 }
 
@@ -277,8 +274,10 @@ drawbatchbalanceddsamples = function(samplenames, batches, conditions)
 #covariate = sampleannotation$covariate1
 #shufflecovariates = c("N", "DP")
 # shuffle samples whithin a batch for selected covariates
-shufflesamplesinbatch = function(samplenames, batch, covariate, shufflecovariates)
+shufflesamplesinbatch = function(samplenames, batch, covariate, shufflecovariates=NULL)
 {
+  if(is.null(shufflecovariates))
+    shufflecovariates=unique(covariate)
 	ret = samplenames
 	b = covariate %in% shufflecovariates
 	for(thisbatch in unique(batch))
@@ -288,3 +287,6 @@ shufflesamplesinbatch = function(samplenames, batch, covariate, shufflecovariate
 	}
 	return(ret)
 }
+
+
+
