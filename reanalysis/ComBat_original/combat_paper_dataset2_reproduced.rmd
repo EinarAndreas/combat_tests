@@ -13,7 +13,7 @@ This report aims to show to what extent the use of ComBat led to false results i
 Description on how to obtain the data were found [here](https://groups.google.com/forum/#!msg/combat-user-forum/S9vBcXw8RGk/QIoD6oRBM9IJ) which had links to [dataExample2.txt](http://www.bu.edu/jlab/wp-assets/ComBat/data/dataExample2.txt)
 and [sampleInfoExample2.txt](http://www.bu.edu/jlab/wp-assets/ComBat/data/sampleInfoExample2.txt)
 
-This document has four main parts
+This document has four main parts 
 - Reproduce some of the results to show that we are working on the same data and analysis workflow
 - Remove the use of ComBat and perform the same analysis with an alternative established tool
 - Estimate the error introduced by ComBat and the consequences for the conclusion of the study
