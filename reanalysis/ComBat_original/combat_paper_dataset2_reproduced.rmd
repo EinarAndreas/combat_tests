@@ -456,6 +456,26 @@ legend("topright", legend=c("Reproduced p-values real labels", "Permuted C and R
 ```
 
 
+Forslag 2 figur brukt i artikkel.
+```{r pvaluesjohnson2, dev='svg', fig.width=10, fig.height=10, tidy=FALSE}
+# figure used in our article
+# NB! bruker orgniale data som ikke er floored eller log2!
+par(mfrow=c(1, 1))
+
+# reproduced ComBat + limma
+hist(EB3_limma_res$p.value[,1], main="P-values, 3 settings", breaks=100, xlab="p-value", ylim=c(0,3000), border="red")
+
+# batch handled in limma
+hist(datamatrix_limma_res$p.value[,1], add=T, breaks=100, xlab="p-value" , ylim=c(0,3000), border="blue")
+
+# random ComBat + limma
+hist(EBrand_limma_pvalues, add=T, breaks=100, xlab="p-value" , ylim=c(0,3000), border="black")
+
+legend("topright", legend=c("Reald data ComBat adjusted", "Reald data Limma adjusted", "Random data ComBat adjusted"),
+       text.col=c("red", "blue", "black"))
+```
+
+
 ### References
 
 

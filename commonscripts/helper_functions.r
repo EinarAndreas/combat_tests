@@ -44,17 +44,17 @@ addbatcheffect = function(df, batches, thismean=1, thissd=1)
 }
 
 # 
-addconditioneffect = function(df, conditions, ndiffgenes, thismean=1, betweensd=1, insidesd=1)
+addconditioneffect = function(df, labels, ndiffgenes, thismean=1, betweensd=1, insidesd=1, affectedconditions)
 {
 	ret = df
 	if(ndiffgenes>0)
 	{
-		for(i in 1:length(unique(conditions)))
+		for(i in 1:length(affectedconditions))
 		{
 			for(s in 1:ndiffgenes)
 			{
-				thisgeneseffect = rnorm(thismean, sd=betweensd)
-				a=conditions==conditions[i]
+				thisgeneseffect = rnorm(1, thismean, sd=betweensd)
+				a=labels==affectedconditions[i]
 				#ret[s, a] = ret[s, a]+ rnorm(length(ret[s, a]), mean=thisgeneseffect)		
 				ret[s, a] = rnorm(length(ret[s, a]), mean=thisgeneseffect, sd=insidesd)		
 			}
@@ -87,7 +87,7 @@ getdifftab_sva = function(edata, sa, mod, threshold=0.05)
 getdifftab_limma = function(edata, condition,  contrast, block=NULL, threshold=0.05)
 {
 	require(limma)
-	fac = as.factor(condition)	
+	fac = factor(condition)	
 	design = model.matrix(~0 + fac)
 	if(!is.null(block))
 	{
