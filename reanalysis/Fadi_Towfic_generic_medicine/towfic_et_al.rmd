@@ -1,11 +1,7 @@
 Reproduction and alternative analysis of "Comparing the Biological Impact of Glatiramer Acetate with the Biological Impact of a Generic"
 ========================================================
 
-
-```{r, results='hide', echo=FALSE}
-starttime = Sys.time()
-```
-`r as.character(starttime)`
+`r as.character(Sys.time())`
 
 ### Overview
 This report aims to show that the use of the statistical tool ComBat from [Johnson et al.](http://biostatistics.oxfordjournals.org/content/8/1/118.abstract) led to false results in the analysis performed in [Towfic et al.'s ](http://www.plosone.org/article/info%3Adoi%2F10.1371%2Fjournal.pone.0083757) "Comparing the Biological Impact of Glatiramer Acetate with the Biological Impact of a Generic".
@@ -18,6 +14,12 @@ This document has five main parts
 - Perform a few more sanity checks to substantiate that the difference in results for the two above analysis is mainly introduced by ComBat
 
 
+```{r runparameters, results='hide', echo=FALSE}
+starttime = Sys.time()
+debug = FALSE
+downloaddata=TRUE
+```
+
 ### Getting the data
 
 
@@ -29,9 +31,9 @@ lapply(includelibs, require, character.only=T)
 The important sample information is described in Table S1 from Towfic et al. and its usage in ComBat is described briefly in the methods;
 >  Each microarray’s chip designation was supplied a batch label; there were 18 batches in all. The labels for the treatments (i.e. drug product, reference standard…) were added as covariates.<cite> Towfic et al.
 
-Table S1 does have a "Chip"- coloumn, unfortunatly there is no dedicated "treatment"-coloumn.
+Table S1 does have a "Chip"- column, unfortunately there is no dedicated "treatment"-column.
 Communication with the corresponding author yielded this explanation
-> ..and the only thing we used as a covariate was the unique treatment names themselves (e.g. ³Medium² or ³RS").
+> ..and the only thing we used as a covariate was the unique treatment names themselves (e.g. "Medium"" or "RS").
 
 Based on these descriptions and the annotation for the GEO deposit, we compiled a more complete sample annotation file (sampleannotation.csv).
 
@@ -42,13 +44,13 @@ sampleannotation$chip = as.character(sampleannotation$chip)
 dimnames(sampleannotation)[[1]] = sampleannotation$code
 head(sampleannotation)
 ```
-The "covariate"-coloumn is made based on the "code"-coloumn, but might not match  to what were actually used for all samples. The last two coloumns are from the GEO deposit and reveal that 3 of the samples do not have data and are taken out.
+The "covariate"-column is made based on the "code"-column, but might not match  to what were actually used for all samples. The last two columns are from the GEO deposit and reveal that 3 of the samples do not have data and will be removed from the sampleannotation.
 
-The nameing convention seeme to differ slightly between the Table S1 and the text in Towfic et al. This is our interpretation of covariate labels and its corresponding name in the text.
-- **DP** refferd to as GA (but not GA as in table S1)
-- **N** refferd to as "generic"
-- **M** reffered to as "medium"
-- **RS** reffered to as "reference standard""
+The naming convention seem to differ slightly between the Table S1 and the text in Towfic et al. This is our interpretation of covariate labels and its corresponding name in the text.
+- **DP** referred to as GA (but not GA as in table S1)
+- **N** referred to as "generic"
+- **M** referred to as "medium"
+- **RS** referred to as "reference standard""
 
 ```{r}
 # take out 3 samples that are not assign to a geoaccession. Failed QC?
@@ -66,25 +68,53 @@ table(sampleannotation[sampleannotation$covariate %in% c("DP", "N"),
 
 > The microarray data have been deposited in the Gene Expression Omnibus, under accession number [GSE40566](http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE40566)
 
-The processed data from the above GEO deposit was from another publication which did not processes the data as described in Towfic et al. (personal communication). The lesser processed linked to as [GSE40566_non_normalized.txt.gz](http://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE40566&format=file&file=GSE40566%5Fnon%5Fnormalized%2Etxt%2Egz) in the supplementary data was thus used in this report, although it is not confirmed that this is the version of the data actually used in Towfic et al.
+The processed data from the above GEO deposit ("Series Matrix File") is from another publication which did not processes the data as described in Towfic et al. (personal communication). The lesser processed data in GEO linked to as [GSE40566_non_normalized.txt.gz](http://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE40566&format=file&file=GSE40566%5Fnon%5Fnormalized%2Etxt%2Egz) in the "Supplementary file" section was thus used in this report.
 
-Probe annotation was also found in the supplementary data as [GSE40566_RAW.tar](http://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE40566&format=file).
+Probe annotation was also found in the "Supplementary file" section as [GSE40566_RAW.tar](http://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE40566&format=file).
 
 A recap of the important input files used in this report:
-- **sampleannotation.csv** holds the important sample/batch/covariate assignment. Compiled based on inforamtion in Towfic et al, the geo deposit and personal communication.
-- **GSE40566_non_normalized.txt** the measurments in a sample vs probe matrix. From the [GEO deposit](http://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE40566&format=file&file=GSE40566%5Fnon%5Fnormalized%2Etxt%2Egz).
-- **GPL6887_MouseWG-6_V2_0_R3_11278593_A.txt** the probe annotation needed for the datarow to probe to gene matching. From the GEO deposit inside the [GSE40566_RAW.tar](http://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE40566&format=file).
+- **sampleannotation.csv** holds the important sample/batch/covariate assignment. Compiled based on information in Towfic et al, the geo deposit and personal communication.
+- **GSE40566_non_normalized.txt** the measurements in a sample vs probe matrix. From the [GEO deposit](http://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE40566&format=file&file=GSE40566%5Fnon%5Fnormalized%2Etxt%2Egz). Not in github.
+- **GPL6887_MouseWG-6_V2_0_R3_11278593_A.txt** the probe annotation needed for the data row to probe to gene matching. From the GEO deposit inside the [GSE40566_RAW.tar](http://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE40566&format=file). Not in github.
 
 Reading the data.
 ```{r}
-# the output from Illumina software.
-rawdata = read.table("not_in_github/GSE40566_non_normalized.txt", sep="\t", header=TRUE, stringsAsFactors=FALSE)
 
-# the probe annotation file found inside GSE40566_RAW.tar
-rawannotation = read.table("not_in_github/GPL6887_MouseWG-6_V2_0_R3_11278593_A.txt", sep="\t", header=TRUE, stringsAsFactors=FALSE, skip=8, comment.char="", quote="", fill=TRUE)
+if(downloaddata)
+{
+  temp <- tempfile()
+  download.file(url="http://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE40566&format=file&file=GSE40566%5Fnon%5Fnormalized%2Etxt%2Egz",
+              destfile=temp, mode = "wb")
+  rawdata <- read.table(temp, sep="\t", header=TRUE, stringsAsFactors=FALSE)
+  unlink(temp)
+  
+  temp <- tempfile()
+  download.file(url="http://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE40566&format=file",
+              destfile=temp, mode = "wb")
+  tardirtemp = tempdir()
+  untar(temp, exdir = tardirtemp)
+  rawannotation = read.table(paste(tardirtemp ,"/GPL6887_MouseWG-6_V2_0_R3_11278593_A.txt.gz", sep=""), 
+                             sep="\t", header=TRUE, stringsAsFactors=FALSE, 
+                             skip=8, comment.char="", quote="", fill=TRUE)
+  
+  unlink(temp)
+  unlink(tardirtemp, recursive=TRUE )
+}else{
+  
+  # if download did not work change downloaddata to FALSE
+  # download data from the GEO deposit
+  # unpack and place files in a folder named "not_in_github"
+  rawdata = read.table("not_in_github/GSE40566_non_normalized.txt", 
+                       sep="\t", header=TRUE, stringsAsFactors=FALSE)
+
+  # the probe annotation file found inside GSE40566_RAW.tar
+  rawannotation = read.table("not_in_github/GPL6887_MouseWG-6_V2_0_R3_11278593_A.txt", 
+                             sep="\t", header=TRUE, stringsAsFactors=FALSE, 
+                             skip=8, comment.char="", quote="", fill=TRUE)
+}
 ```
 
-Some formatting is needed to match the probe information to the measurments and the measurments to the sample information.
+Some formatting is needed to match the probe information to the measurements and the measurements to the sample information.
 ```{r}
 # annotation file has two separate tables, one for experimental and one at the end for controls.
 # splitting and fixing the tables:
@@ -119,7 +149,7 @@ dimnames(datamatrix_raw)[[1]] = probeannotation$Probe_Id
 datamatrix_raw = datamatrix_raw[, match(sampleannotation$code , dimnames(datamatrix_raw)[[2]])]
 ```
 
-Several tables with results are presented in the Supporting Information in Towfic et al. We are aiming to reproduce two of these. Unfortunatly they were only presented in a pdf-format not easely parsed by a computer. We had to resort to a ad-hoc method of cut-and-paste from pdf into text files which were somewhat polluted by pdf-formatting code. For some tables about 10% of the rows will be lost, but the rest will suffice for our purpose.
+Several tables with results are presented in the Supporting Information in Towfic et al. We are aiming to reproduce two of these. Unfortunately they were only presented in a pdf-format not easily parsed by a computer. We had to resort to a adhoc method of cut-and-paste from pdf into text files which were somewhat polluted by pdf-formatting code. For some tables about 10% of the rows will be lost, but the rest will suffice for our purpose.
 
 ```{r}
 # Table S2
@@ -150,7 +180,7 @@ table_s5$Fold_Change = as.numeric(table_s5$Fold_Change)
 
 ### Reproduce some of the original results
 
-Towfic et al. performed many different test on the data and it proved difficult and to labouros to reproduce all of their results without any source code. Insted we foucus on the key part of testing for differentially expressed genes between "GA" (DP) and "generic"(N) as described in Table S2 and Table S5. But before those tests we have to pre-process according to the description.
+Towfic et al. performed many different test on the data and it is outside the scope of this report to reproduce all of their results. We focus on the key part of testing for differentially expressed genes between "GA" (DP) and "generic"(N) as described in Table S2 and Table S5. But before those tests we have to preprocess according to the description.
 
 > Starting with background-corrected bead-level signals, we quantile normalized the extracted data for all samples across all 46,547 probes via the “preprocessCore” package in R.
 
@@ -213,13 +243,13 @@ plot(table_s2$AVG_Reference_Standard, meanRS[table_s2$ID], pch=".")
 plot(table_s2$AVG_GA, meanDP[table_s2$ID], pch=".")
 plot(table_s2$AVG_generic, meanN[table_s2$ID], pch=".")
 ```
-The numbers in Table S2 is almost reproduced.
+Original values from table S2 on X-axis, reporduced values on Y-axis. The values in Table S2 is almost reproduced.
 
 
 **Table S5**
 > Comparison of expression in GA to expression in GA for each probe, including fold change, ANOVA, LIMMA with background subtraction, comparative marker selection by signal-to-noise ratio, comparative marker selection by t-test, and the Wilcoxon non-parametric method. <cite> Figure text, Towfic et al.
 
-There must be a typo in the figure text, they ment "Comparison of expression in GA to expression in **generic** for each probe, ...".
+There must be a typo in the figure text, they meant "Comparison of expression in GA to expression in **generic** for each probe, ...".
 
 > To find differentially expressed probes between generic and GA, we utilized various statistical tests at the probe level and merged the results across the different methods. <cite> Towfic et al.
 
@@ -238,7 +268,7 @@ plot(table_s5$Fold_Change, foldchange_DP_N[table_s5$Probe],
 rm(lim)
 ```
 The plot reveals that the reproduced fold changes are much more compressed than the ones in Table S5.
-There seems to two linear relationship, one for neagtive FC's and another for positve FC's. They seems to have different intercepts but comparable slope.
+There seems to two linear relationship, one for negative FC's and another for positive FC's. They seems to have different intercepts but comparable slope.
 
 The average expression for "GA" (DP) and "generic" (N) are also given in Table S2. The fold change calculated from those numbers compared to the ones given in Table S5 shows a similar pattern:
 
@@ -325,7 +355,7 @@ legend("topright", legend=c("All probes", "Table S5 probes"), text.col=thiscolor
 ```
 > In parallel, we used Comparative Marker Selection as implemented in GenePattern [26] to directly compare probes between generic and GA. We applied two separate techniques within this framework; a traditional T-test and a Signal-to-Noise Ratio test (SNR).
 
-The T-test is stright forward.
+The T-test is straight forward.
 ```{r dev='png', fig.width=10, fig.height=6, fig.show='hold', tidy=FALSE}
 ttest_p = apply(datamatrices[["real_combat_covariates"]], 1, 
                 function(x) { t.test(x[sampleannotation$covariate=="DP"], 
@@ -412,7 +442,7 @@ hist(limma_p_woc, breaks=100, add=T, freq=T, border=thiscolors[2])
 legend("topright", legend=c("ComBat adjusted", "LIMMA adjusted"), text.col=thiscolors)
 ```
 
-The T-test can not handle batch inside the test. An alternative way of performing a t-test is to subset the data and do the comparison whithin each batch. For each of the 7 batches that have both a DP ("GA") and a N ("generic") sample, we can do a direct comparison and in effect ending up with 7 samples. Only 7 samples will give less power but the caveats because of batch effect and adjustments are also far less.
+The T-test can not handle batch inside the test. An alternative way of performing a t-test is to subset the data and do the comparison within each batch. For each of the 7 batches that have both a DP ("GA") and a N ("generic") sample, we can do a direct comparison and in effect ending up with 7 samples. Only 7 samples will give less power but the caveats because of batch effect and adjustments are also far less.
 ```{r tidy=FALSE, results='hold'}
 
 # subsetting the samples so that they have a balanced conditon distribution across batches. i.e each batch has the same compitition of conditions (example 70% treated vs 30% untreated)
