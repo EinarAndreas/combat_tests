@@ -303,7 +303,7 @@ hist(randommatrix_limma_pvalues, border="black", add=T, breaks=100)
 hist(randommatrix_limma_batch_pvalues, border="red", add=T, breaks=100)
 legend("topright", legend=c("ComBat adjusted", "Limma adjusted", "No adjustment"), text.col=c("blue", "black", "red"))
 ```
-The p-values for ComBat adjusted random numbers are slightly enriched for low p-values. Indicating that the same enrichment seen in the real data is also false.
+The p-values for ComBat adjusted random numbers are slightly enriched for low p-values. Indicating that some of the enrichment seen in the real data is also false.
 
 Another sanity check is to subset the real data into fictive batches. The idea behind this check stems from the observation that the EB2 data set contains the same number of samples with the same batch/covariate balance as the third batch alone. 
 > The third batch was used for comparison against the EB2 analysis results because it was an identical experiment to EB2 other than the fact that it was conducted in a single batch. <cite> Johnson et al.

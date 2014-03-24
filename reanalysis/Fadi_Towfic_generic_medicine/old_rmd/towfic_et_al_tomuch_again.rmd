@@ -16,9 +16,8 @@ This document has five main parts
 
 ```{r runparameters, results='hide', echo=FALSE}
 starttime = Sys.time()
-debug = FALSE
+debug = TRUE
 downloaddata=TRUE
-set.seed(100)
 ```
 
 ```{r, results='hide', message=FALSE}
@@ -290,9 +289,24 @@ plot(x, y , ylim=lim, xlim=lim, pch="." ,  xlab="Table_S5", ylab="Table_S2",
      main="FC comparison, given values.") #  almost perfect match with offset.
 rm(x, y, lim)
 ```
-There seems to be some inconsistancy between between the fold changes in table S5 and the reproduced ones, however it is the conficende i.e p-values that are affected by the use of ComBat. 
+There seems to be some inconsistancy between between the fold changes in table S5 and the reproduced ones, however it is the conficende i.e p-values that are affected by the use of ComBat. The rest of table S5 is p-values and we will ty and reproduce some of them.
 
-The rest of table S5 is p-values and we will try to reproduce the ones from Limma.
+ANOVA is The first test for differentially expressed gene.
+>  First, we computed the statistical significance of differential expression between treatments using the Analysis of Variance (ANOVA) method for each probe [21]...<cite> Towfic et al.
+
+```{r}
+anova_p = apply(datamatrices[["real_combat_covariates"]], 1,
+              function(x){ summary(aov(x[sampleannotation$covariate %in% c("DP", "N")]~
+                                         sampleannotation$covariate[sampleannotation$covariate %in% c("DP", "N")]))[[1]][1,5]})
+
+par(mfrow=c(1, 2))
+plot(table_s5[,"anova_p"], anova_p[table_s5$Probe], xlab="Original Table S5", 
+     ylab="Reproduced", main="ANOVA P-values from table S5 vs. reproduced")
+thiscolors = c("black", "red")
+hist(anova_p, breaks=100, freq=T, border=thiscolors[1], main="Reproduced ANOVA p-values for DP vs. N")
+hist(anova_p[table_s5$Probe], breaks=100, add=T, freq=T, border=thiscolors[2])
+legend("topright", legend=c("All probes", "Table S5 probes"), text.col=thiscolors)
+```
 
 > Next, we utilized Linear Models for Microarray (LIMMA) data analysis [23], [24] R package, part of the Bioconductor framework [25], to compare generic and GA samples, fitting a linear model that adjusts for fixed effect from medium (Effect = (GA-generic) – (generic-Medium)). The coefficients for the linear model were tested for significance using a modified t-test (taking into account standard deviation)...<cite> Towfic et al.
 
@@ -331,16 +345,73 @@ hist(limma_p_alt, breaks=100, freq=T, border=thiscolors[1], main="Reproduced LIM
 hist(limma_p_alt[table_s5$Probe], breaks=100, add=T, freq=T, border=thiscolors[2])
 legend("topright", legend=c("All probes", "Table S5 probes"), text.col=thiscolors)
 ```
+> In parallel, we used Comparative Marker Selection as implemented in GenePattern [26] to directly compare probes between generic and GA. We applied two separate techniques within this framework; a traditional T-test and a Signal-to-Noise Ratio test (SNR).
 
-In addition to the Limma test, Towfic et al. performed similar tests for significant probes between generic and GA using several other methods. 
-We tried several of them as well, but have skipped them in this report since they showed a similar patterent as for the Limma p-values.
+The T-test is straight forward.
+```{r dev='png', fig.width=10, fig.height=6, fig.show='hold', tidy=FALSE}
+ttest_p = apply(datamatrices[["real_combat_covariates"]], 1, 
+                function(x) { t.test(x[sampleannotation$covariate=="DP"], 
+                                     x[sampleannotation$covariate=="N"])$p.value } )
+par(mfrow=c(1, 2))
+plot(table_s5[,"t_test_p"], ttest_p[table_s5$Probe], xlab="Original Table S5", 
+     ylab="Reproduced", main="t-test P-values from table S5 vs. reproduced")
+thiscolors = c("black", "red")
+hist(ttest_p, breaks=100, freq=T, border=thiscolors[1], main="Reproduced t-test p-values for DP vs. N")
+hist(ttest_p[table_s5$Probe], breaks=100, add=T, freq=T, border=thiscolors[2])
+legend("topright", legend=c("All probes", "Table S5 probes"), text.col=thiscolors)
+```
+
+> ...we used the Wilcoxon Rank Sum Test [27] as implemented in R ...
+
+```{r dev='png', fig.width=10, fig.height=6, fig.show='hold', tidy=FALSE}
+# wilcox.test gives a few hundred warnings for ties:
+# Warning: cannot compute exact p-value with ties
+wilcoxon_p = suppressWarnings(
+  apply(datamatrices[["real_combat_covariates"]], 1, 
+        function(x) { wilcox.test(x[sampleannotation$covariate=="DP"],
+                                  x[sampleannotation$covariate=="N"])$p.value } ))
+par(mfrow=c(1, 2))
+plot(table_s5[,"wilcoxon_p"], wilcoxon_p[table_s5$Probe], xlab="Original Table S5", 
+     ylab="Reproduced", main="wilcoxon P-values from table S5 vs. reproduced")
+thiscolors = c("black", "red")
+hist(wilcoxon_p, breaks=100, freq=T, border=thiscolors[1], 
+     main="Reproduced wilcoxon p-values for DP vs. N")
+hist(wilcoxon_p[table_s5$Probe], breaks=100, add=T, freq=T, border=thiscolors[2])
+legend("topright", legend=c("All probes", "Table S5 probes"), text.col=thiscolors)
+
+```
+
 
 ### Analysis without ComBat and consequences on the results
 
 Table S2 has average expression values for the conditions, but includes no values about how much trust we can have in those average expressions (i.e significance tests, confidence intervals etc.).
 
-Table S5 on the other hand consists of results from significance tests that are strongly influenced by ComBat's data transformation. An alternative way of handling batch effect compared to ComBat's is to include it in the statistical test. This can be done in Limma
+Table S5 on the other hand consists of results from significance tests that are strongly influenced by ComBat's data transformation. An alternative way of handling batch effect compared to ComBat's is to include it in the statistical test. This can be done in ANOVA.
 
+```{r tidy=FALSE}
+
+DP = sampleannotation$covariate=="DP"
+N = sampleannotation$covariate=="N"
+thisdata =datamatrices[["real_qnorm"]]
+cov_fac = factor(sampleannotation$covariate[DP|N])
+chip_fac = factor(sampleannotation$chip[DP|N])
+#anova_p1 = apply(thisdata, 1, function(x){ summary(aov(x[DP|N]~chip_fac*cov_fac))[[1]][2,5]}  ) 
+anova_woc = apply(thisdata, 1, function(x){ summary(aov(x[DP|N]~chip_fac+cov_fac))[[1]][2,5]}  ) 
+#co = list(cov_fac=contr.sum, chip_fac=contr.sum)
+#anova_p3 = apply(thisdata, 1, function(x){ Anova(lm(x[DP|N] ~  cov1_fac + chip_fac,  contrasts=co), type=3)[[4]][2]}  ) 
+table(p.adjust(anova_p , method="fdr")<0.05, p.adjust(anova_woc , method="fdr")<0.05, dnn=c("ComBat adj", "ANOVA adj"))
+```
+The number of significant probes using the given FDR threshold of 0.05 when batch effect is handled by ANOVA is 
+**`r sum(p.adjust(anova_woc , method="fdr")<0.05)`**. This is much lower compared to when ComBat is applied, 
+**`r sum(p.adjust(anova_p , method="fdr")<0.05)`**.  The p-value distribution is still skewed, but not as much.
+```{r dev='png', fig.width=8, fig.height=8, fig.show='hold', tidy=FALSE}
+thiscolors = c("black", "red")
+hist(anova_p, breaks=100, freq=T, border=thiscolors[1], main="Reproduced ANOVA p-values for DP vs. N")
+hist(anova_woc, breaks=100, add=T, freq=T, border=thiscolors[2])
+legend("topright", legend=c("ComBat adjusted", "ANOVA adjusted"), text.col=thiscolors)
+```
+
+LIMMA also has the possibility to handle batch inside the statistical test.
 ```{r dev='png', fig.width=8, fig.height=8, fig.show='hold', tidy=FALSE}
 group = factor(sampleannotation$covariate)
 block = as.factor(sampleannotation$chip)
@@ -363,16 +434,92 @@ hist(limma_p_woc, breaks=100, add=T, freq=T, border=thiscolors[2])
 legend("topright", legend=c("ComBat adjusted", "LIMMA adjusted"), text.col=thiscolors)
 ```
 
+The T-test can not handle batch inside the test. An alternative way of performing a t-test is to subset the data and do the comparison within each batch. For each of the 7 batches that have both a DP ("GA") and a N ("generic") sample, we can do a direct comparison and in effect ending up with 7 samples. Only 7 samples will give less power but the caveats because of batch effect and adjustments are also far less.
+```{r tidy=FALSE, results='hold'}
+
+# subsetting the samples so that they have a balanced conditon distribution across batches. i.e each batch has the same compitition of conditions (example 70% treated vs 30% untreated)
+drawbatchbalanceddsamples = function(samplenames, batches, conditions)
+{
+  # 1. find the minimal count for each condition across batches.
+	# 2 find the minimal given count / minimal count inside each batch
+	# 3 If greater than 1, scale up all conditions for that batch.
+	# 4 draw samples randomly from the above calculated condition-count for each batch
+	# 5 create and return the data subset.
+
+
+	#1
+	starttab = table( data.frame(conditions, batches ))	
+	tab = starttab[, apply(starttab, 2,  min)>0] # do not use batches with missing conditions
+	if(dim(tab)[2]==0)
+	{
+		warning(  paste("Unable to find a balanced subset that has at least one of each condition. Remove one or more conditions and try again")) 
+		return(vector())
+	}
+	if(dim(tab)[1]<dim(starttab)[1])
+	{
+		warning(  paste("Lost batches during balancing due to missing conditions in those. ",   "Tried: ", paste( dimnames(starttab)[[2]], collapse=" "), "Got:", paste( dimnames(tab)[[2]], collapse=" "  ) ))
+	}
+	
+	mincond = apply(tab, 1,  min)
+	
+	#2
+	tab2 = mincond/tab
+	
+	#3
+	scalings = apply( 1/tab2, 2, min)
+	scaledtab = tab
+	scaledtab[,] = mincond	
+	scaledtab = t(t(scaledtab) * scalings)
+	scaledtab = round(scaledtab,0)
+	
+	winnersamples= vector()
+	for(c in dimnames(scaledtab)[[1]])
+	{
+		for(b in dimnames(scaledtab)[[2]])
+		{
+			a = batches==b & conditions==c
+			winnersamples = c( winnersamples, sample( samplenames[a], scaledtab[c,b]))
+		}
+	}
+	return(winnersamples)	
+}
+
+
+a = sampleannotation$covariate %in% c("N", "DP")
+nbalanceddatasets = 3
+pairedpvals = list()
+for(i in 1:nbalanceddatasets)
+{
+  bs = drawbatchbalanceddsamples(sampleannotation$code[a], sampleannotation$chip[a], sampleannotation$covariate[a])
+  print(table(sampleannotation[bs,c("chip", "covariate")])) 
+  bs = bs[order(sampleannotation[bs, "covariate"], sampleannotation[bs, "chip"])]
+  sampleannotation[bs, c("covariate", "chip")] # the samples are ordered
+  thispaireddata = datamatrices[["real_qnorm"]][,bs][,1:7] -  datamatrices[["real_qnorm"]][,bs][,8:14]
+  pairedpvals[[i]] = apply(thispaireddata, 1, 
+                function(x) { t.test( x)$p.value } )
+  print(table(p.adjust(pairedpvals[[i]] , method="fdr")<0.05))
+  rm(bs,thispaireddata)  
+}
+```
+
+```{r dev='png', fig.width=8, fig.height=8, fig.show='hold', tidy=FALSE}
+par(mfrow=c(2, 2))
+hist(ttest_p, breaks=100, freq=T, border="black", main="P-values t-test on ComBat adjusted data")
+for(i in 1:length(pairedpvals))
+{
+  hist(pairedpvals[[i]], breaks=100, freq=T, border="black", main=paste("P-values paired t-test draw ", i, sep=""))
+}
+
+```
+
+
 
 
 ### Additional sanity checks
 
-To substantiate that the result from the use of ComBat is less trustworthy than the alternative analysis we provide a couple of additional sanity checks.
-
-First we use random numbers drawn from the same distribution(mean=0, sd=1) regardless of batch or covariate but retaining the batch/covariate design.
 ```{r}
 set.seed(100)
-datamatrices[["random_raw"]] = matrix(rnorm(length(datamatrices[["real_raw"]]), mean=0, sd=1), 
+datamatrices[["random_raw"]] = matrix(rnorm(length(datamatrices[["real_raw"]])), 
                                       nrow=nrow(datamatrices[["real_raw"]]), 
                                       ncol=ncol(datamatrices[["real_raw"]]), 
                                       dimnames=dimnames(datamatrices[["real_raw"]]))
@@ -384,59 +531,68 @@ datamatrices[["random_combat_covariates"]]= as.matrix(ComBat(dat=datamatrices[["
                                                              prior.plots=FALSE))
 ```
 
-Limma is then used in 3 ways
-- On the ComBat adjusted random numbers
-- On the random numbers ignoring batch information
-- On the random numbers including batch as a blocking factor
-
-
 ```{r}
 group = factor(sampleannotation$covariate)
 design = model.matrix(~0 + group)
-cont.matrix = makeContrasts ( contrasts="groupDP-groupN", levels=design)
-
-
-fit = lmFit(datamatrices[["random_combat_covariates"]], design)  
+fit = lmFit(datamatrices[["random_combat_covariates"]], design)
+cont.matrix = makeContrasts ( contrasts="groupDP-groupN", levels=design)  
 fit2 = contrasts.fit(fit, cont.matrix)
-limma_p_rand_combat = eBayes(fit2)$p.value[,1]
-
-fit = lmFit(datamatrices[["random_raw"]], design)  
-fit2 = contrasts.fit(fit, cont.matrix)
-limma_p_rand_nocombat = eBayes(fit2)$p.value[,1]
-
-
-block = as.factor(sampleannotation$chip)
-design = model.matrix(~0+group+block)
-cont.matrix = makeContrasts ( contrasts="groupDP-groupN", levels=design)
-fit = lmFit(datamatrices[["random_raw"]], design)  
-fit2 = contrasts.fit(fit, cont.matrix)
-limma_p_rand_batchblocked = eBayes(fit2)$p.value[,1]
-
+limma_ret_rand = eBayes(fit2)
+limma_p_rand = limma_ret_rand$p.value
+names(limma_p_rand) = names(limma_ret_rand$Amean)
+table(p.adjust(limma_p_rand, method="fdr")<0.05)
 ```
 
 ```{r dev='png', fig.width=8, fig.height=8, fig.show='hold', tidy=FALSE}
 par(mfrow=c(1, 1))
-thiscolors = c("red", "blue", "black")
-hist(limma_p_rand_combat, breaks=100, freq=T, border=thiscolors[1], main="P-values, Random numbers for DP vs. N")
-hist(limma_p_rand_nocombat, breaks=100, add=T, freq=T, border=thiscolors[2])
-hist(limma_p_rand_batchblocked, breaks=100, add=T, freq=T, border=thiscolors[3])
-legend("topright", legend=c("ComBat adjusted", "Limma adjusted", "No adjustment"), text.col=thiscolors)
+thiscolors = c("black", "red")
+hist(limma_p_alt, breaks=100, freq=T, border=thiscolors[1], main="LIMMA p-values for DP vs. N")
+hist(limma_p_rand, breaks=100, add=T, freq=T, border=thiscolors[2])
+legend("topright", legend=c("Reproduced from Real data", "Random data ComBat adjusted"), text.col=thiscolors)
+```
+
+
+
+```{r}
+
+anova_p_rand = apply(datamatrices[["random_combat_covariates"]], 1,
+              function(x){ summary(aov(x[sampleannotation$covariate %in% c("DP", "N")]~
+                                         sampleannotation$covariate[sampleannotation$covariate %in% c("DP", "N")]))[[1]][1,5]})
+table(p.adjust(anova_p_rand, method="fdr")<0.05)
+```
+
+```{r dev='png', fig.width=8, fig.height=8, fig.show='hold', tidy=FALSE}
+par(mfrow=c(1, 1))
+thiscolors = c("black", "red")
+hist(anova_p, breaks=100, freq=T, border=thiscolors[1], main="ANOVA p-values for DP vs. N")
+hist(anova_p_rand, breaks=100, add=T, freq=T, border=thiscolors[2])
+legend("topright", legend=c("Reproduced from Real data", "Random data ComBat adjusted"), text.col=thiscolors)
 ```
 
 The p-value plots from the ComBat adjusted random data shows a skewed distribution, although not as much as for the real data. The random data has no batch effect or other effects like the real data which might affect the ComBat adjustment.
 
-Another sanity check is by permuting the DP (GA) and N(generic) labels and observe changes in the results. In order to retain the batch effect we will only swap labels within a batch. This should in theory give fewer significant probes.
+Another sanity check is by permuting the DP and N labels and look how the result changes. In order to retain the batch effect we will only swap labels within a batch. This should in theory give fewer significant probes.
 
-```{r results='hide'}
+```{r}
 source("../../commonscripts/helper_functions.r")
+#shufflesamplesinbatch = function(samplenames, batch, covariate, shufflecovariates)
+#{
+  #ret = samplenames
+	#b = covariate %in% shufflecovariates
+	#for(thisbatch in unique(batch))
+	#{
+	#	a = batch== thisbatch		
+#		ret[a & b] = sample( samplenames[a&b],sum(a&b),  replace=FALSE)		
+	#}
+	#return(ret)
+#}
 
 nshuffleddatasets = 10
 datamatrices_permuted = list()
-changedlabels=vector()
 for(i in 1:nshuffleddatasets)
 {
   x = shufflesamplesinbatch( sampleannotation$code, sampleannotation$chip, sampleannotation$covariate, c("N", "DP") )
-  changedlabels[i] = (  sum(sampleannotation[,"covariate"] != sampleannotation[x,"covariate"]  ))  # see how many got change. Has 11 N's)  
+  print(  sum(sampleannotation[,"covariate"] != sampleannotation[x,"covariate"]  ))  # see how many got change. Has 11 N's)  
   datamatrices_permuted[[i]] = as.matrix(ComBat(dat=datamatrices[["real_qnorm"]][, x], 
                                                 batch=sampleannotation$chip, 
                                                 mod=combatmod, 
@@ -444,13 +600,8 @@ for(i in 1:nshuffleddatasets)
                                                 par.prior=TRUE, 
                                                 prior.plots=FALSE))
 }
-```
-**`r nshuffleddatasets`** permutations were created and batch adjusted with ComBat.
 
-Then perform the limma test on the ComBat adjusted data as was done for the real data.
-```{r}
 permuted_pvalcounts=list()
-overviewtab = data.frame(permutation=1:nshuffleddatasets, changedlabels=changedlabels, significantprobes=NA)
 for(i in 1:nshuffleddatasets)
 { 
   group = factor(sampleannotation$covariate)
@@ -459,15 +610,11 @@ for(i in 1:nshuffleddatasets)
   cont.matrix = makeContrasts ( contrasts="groupDP-groupN", levels=design)  
   fit2 = contrasts.fit(fit, cont.matrix)  
   this_p = eBayes(fit2)$p.value
-  permuted_pvalcounts[[i]] = hist(this_p, plot=FALSE, breaks=100)$counts 
-  overviewtab$significantprobes[i] =sum(p.adjust(this_p, method="fdr")<0.05)
+  permuted_pvalcounts[[i]] = hist(this_p, plot=FALSE, breaks=100)$counts
+  print(table(p.adjust(this_p, method="fdr")<0.05))
 }
-print(overviewtab)
-rm(overviewtab, group, design, fit, cont.matrix, fit2, this_p)
 ```
-The table lists the number of labels that are changed compared to the real ones for each permutation. Remember that the totat number of N (generic) samples is **`r sum(sampleannotation$covariate=="N")`**. So even when about half of those are swapped with DP(GA), the ComBat adjusted data produces many significant genes. The number of significant genes using the same 0.05 FDR cut-off for the real labels was **`r sum(p.adjust(limma_p_alt , method="fdr")<0.05)`**.
 
-The P-value distribution can slo be plotted.
 ```{r, dev='svg', fig.width=8, fig.height=8, tidy=FALSE}
 real_pvalcounts=hist(limma_p_alt, plot=FALSE, breaks=100)$counts
 plot((1:20)/100, real_pvalcounts[1:20], col="red",
@@ -480,13 +627,12 @@ for(i in 1:length(permuted_pvalcounts))
 }
 legend("topright", legend=c("Reproduced p-values real labels", "Permuted DP and N labels"), text.col=c("red", "blue"))
 ```
-Shuffling the N and DP labels whitinh batches produces about the same p-value distribution as the real data. This is an indication that the significant genes found in the real data is not associated with the N and DP labels, but a rather an effect of the ComBat adjustments.
 
 
 
 
 
-Forslag 1 figur i artikkel.
+Forslag figur brukt i artikkel.
 ```{r pvaluestowfic, dev='svg', fig.width=10, fig.height=10, tidy=FALSE}
 # figure used in our article
 # NB! bruker orgniale data som ikke er floored eller log2!
@@ -500,7 +646,7 @@ hist(limma_p_alt, main="P-values, real data, ComBat followed by Limma", breaks=1
 hist(limma_p_woc, breaks=100, main="P-values, real data, batch handled by Limma", xlab="p-value" , ylim=thisylim)
 
 # random ComBat + limma
-hist(limma_p_rand_combat, main="P-values, Random data, ComBat followed by Limma", breaks=100, xlab="p-value" , ylim=thisylim)
+hist(limma_p_rand, main="P-values, Random data, ComBat followed by Limma", breaks=100, xlab="p-value" , ylim=thisylim)
 
 # permuted labels whitin batch
 
@@ -517,43 +663,6 @@ for(i in 1:length(permuted_pvalcounts))
 legend("topright", legend=c("Reproduced p-values real labels", "Permuted DP and N labels"),
        text.col=c("red", "blue"))
 ```
-
-
-
-Forslag 2 figur i artikkel.
-```{r pvaluestowfic2, dev='svg', fig.width=10, fig.height=10, tidy=FALSE}
-# figure used in our article
-# NB! bruker orgniale data som ikke er floored eller log2!
-par(mfrow=c(1, 1))
-thiscolors = c("red", "blue", "black")
-thisylim = c(0, max(unlist( c(permuted_pvalcounts,real_pvalcounts))))
-xrange=1:20
-xrange=1:25
-# reproduced ComBat + limma
- plot((xrange)/100, hist(limma_p_alt, breaks=100, plot=FALSE)$counts[xrange], 
-       main="P-values",
-       xlab="p-value", 
-       ylab="frequency",
-       ylim=thisylim,
-       type="l",
-       lwd=2,
-       col=thiscolors[1])
-
-# batch handled in limma
-lines((xrange)/100, hist(limma_p_woc, breaks=100, plot=FALSE)$counts[xrange], 
-     col=thiscolors[2], lwd=2)
-
-# random ComBat + limma
-lines((xrange)/100, hist(limma_p_rand_combat, breaks=100, plot=F)$counts[xrange],
-       col=thiscolors[3], lwd=2)
-
-legend("topright", legend=c("Real data, ComBat adjusted",
-                            "Real data, batch handled by Limma",
-                            "Random data, ComBat adjusted"),
-       text.col=thiscolors)
-
-```
-
 
 
 ### References
