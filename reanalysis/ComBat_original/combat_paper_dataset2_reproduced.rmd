@@ -9,7 +9,7 @@ starttime = Sys.time()
 `r as.character(starttime)`
 
 ### Overview
-This report aims to show to what extent the use of ComBat led to false results in the second analysis example given in [Johnson et al.](http://biostatistics.oxfordjournals.org/content/8/1/118.abstract) The example named "Data Set 2" and the analysis are described in the [supplementary material](http://biostatistics.oxfordjournals.org/content/suppl/2006/04/21/kxj037.DC1/kxj037supp.pdf) for Johnson et al.
+This report aims to show to what extent the use of ComBat led to false results in the second analysis example given in [Johnson et al.](http://biostatistics.oxfordjournals.org/content/8/1/118.abstract) The example named "Data Set 2" and the analysis is described in the [supplementary material](http://biostatistics.oxfordjournals.org/content/suppl/2006/04/21/kxj037.DC1/kxj037supp.pdf) for Johnson et al.
 Description on how to obtain the data were found [here](https://groups.google.com/forum/#!msg/combat-user-forum/S9vBcXw8RGk/QIoD6oRBM9IJ) which had links to [dataExample2.txt](http://www.bu.edu/jlab/wp-assets/ComBat/data/dataExample2.txt)
 and [sampleInfoExample2.txt](http://www.bu.edu/jlab/wp-assets/ComBat/data/sampleInfoExample2.txt)
 
@@ -17,7 +17,7 @@ This document has four main parts
 - Reproduce some of the results to show that we are working on the same data and analysis workflow
 - Remove the use of ComBat and perform the same analysis with an alternative established tool
 - Estimate the error introduced by ComBat and the consequences for the conclusion of the study
-- Perform a few more sanity checks to substantiate that the difference in results for the two above analysis is mainly due to error introduced by ComBat  
+- Perform a few more sanity checks to substantiate that the difference in results for the two above analyses is mainly false and introduced by ComBat  
 
         
 ### Read data and sample annotation
@@ -57,6 +57,7 @@ Inspection of the covariate/batch balance;
 ```{r}
 print(table(sampleannotation[ , c("Batch", "Type")])  )
 ```
+Three batches and two covariates. There is a "Cell" column in the sample annotation, but it does not seem to have been used.
 
 ### Reproduce the original results
 Following the description in section A.1 and A.2 and figure texts in the supplementary materials for Johnson et al., we try to reproduce some of their results. First, the heatmap in Figure A.1.
@@ -206,7 +207,7 @@ datamatrix_limma_res = eBayes(fit2)
 rm(thismat, Type, Block, design, fit, cont.matrix, fit2)
 print(table(qvalue(datamatrix_limma_res$p.value[,1])$qvalue<0.05))
 ```
-Number of differentially expressed probes found with the alternative anaysis is **`r sum(qvalue(datamatrix_limma_res$p.value[,1])$qvalue<0.05)`**.
+Number of differentially expressed probes found with the alternative analysis is **`r sum(qvalue(datamatrix_limma_res$p.value[,1])$qvalue<0.05)`**.
 
 ### Consequences of ComBat use for the end result
 
@@ -241,7 +242,7 @@ table( qvalue(datamatrix_limma_res$p.value[,1])$qvalue<0.05 ,
          qvalue(EB3_limma_res$p.value[,1])$qvalue<0.05,
        dnn=c("limma", "ComBat"))
 ```
-And if they were to use the top 1000 probes in a gene set test, they would have found many of the same genes regardless of hadling batch effects by ComBat or limma.
+And if they were to use the top 1000 probes in a gene set test, they would have found many of the same genes regardless of handling batch effects by ComBat or limma.
 ```{r, tidy=FALSE}
 table( rank(datamatrix_limma_res$p.value[,1])  <=1000 & 
          rank(EB3_limma_res$p.value[,1])<=1000   )
@@ -325,7 +326,7 @@ Batch45_annot$Batch[Batch45_annot$Type=="R"][1:3] = "5"
 print(table(sampleannotation[sampleannotation$Batch %in% c("1", "2"), c("Batch", "Type")]))
 print(table(Batch45_annot[, c("Batch", "Type")]))
 ```
-Then adjust the data with fictive batches and calculate p-values as done for the unadjusted batch 3.
+Then adjust the data with fictive batches and calculate p-values as done for the un-adjusted batch 3.
 ```{r, results='hide', tidy=FALSE}
 EB45 = as.matrix( sva::ComBat(
             dat=Batch45, 

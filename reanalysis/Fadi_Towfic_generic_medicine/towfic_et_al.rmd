@@ -16,7 +16,7 @@ This document has five main parts
 
 ```{r runparameters, results='hide', echo=FALSE}
 starttime = Sys.time()
-debug = FALSE
+debug = TRUE
 downloaddata=TRUE
 set.seed(100)
 ```
