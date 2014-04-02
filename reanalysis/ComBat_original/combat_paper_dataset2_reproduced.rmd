@@ -506,7 +506,7 @@ par(mfrow=c(1, 1))
 hist(log2ComBat_res$p.value[,1], main="P-values, 3 settings", breaks=100, xlab="p-value", ylim=c(0,3000), border="red")
 
 # batch handled in limma
-hist(randomdatalimmablock_pvalues, add=T, breaks=100, xlab="p-value" , ylim=c(0,3000), border="blue")
+hist(log2limmablock_res$p.value[,1], add=T, breaks=100, xlab="p-value" , ylim=c(0,3000), border="blue")
 
 # random ComBat + limma
 hist(randomdataComBat_pvalues, add=T, breaks=100, xlab="p-value" , ylim=c(0,3000), border="black")

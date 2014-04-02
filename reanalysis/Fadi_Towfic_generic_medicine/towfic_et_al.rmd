@@ -230,7 +230,7 @@ meanM = rowMeans(thisdata[, sampleannotation[, "covariate"]=="M"])
 meanRS = rowMeans(thisdata[, sampleannotation[, "covariate"]=="RS"]) 
 meanDP = rowMeans(thisdata[, sampleannotation[, "covariate"]=="DP"])
 meanN = rowMeans(thisdata[, sampleannotation[, "covariate"] =="N"]) 
-
+rm(thisdata)
 foldchange_RS_vs_M = meanRS - meanM
 foldchange_RS_vs_M = foldchange_RS_vs_M[meanM>6 | meanRS>6]
 top1000_RS_vs_M = names(foldchange_RS_vs_M[order(abs(foldchange_RS_vs_M), decreasing=TRUE)])[1:1000]
@@ -345,7 +345,7 @@ Table S5 on the other hand consists of results from significance tests that are 
 group = factor(sampleannotation$covariate)
 block = as.factor(sampleannotation$chip)
 design = model.matrix(~0+group+block)
-fit = lmFit(thisdata, design)
+fit = lmFit(datamatrices[["real_qnorm"]], design)
 cont.matrix = makeContrasts ( contrasts="groupDP-groupN", levels=design)  
 fit2 = contrasts.fit(fit, cont.matrix)
 limma_ret_woc = eBayes(fit2)
