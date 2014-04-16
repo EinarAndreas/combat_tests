@@ -3,7 +3,7 @@
 #################
 
 # TeX
-tex-aux/
+**/tex-aux/
 *.synctex.gz
 
 
