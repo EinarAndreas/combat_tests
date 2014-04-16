@@ -5,7 +5,19 @@
 \usepackage[english]{babel}
 
 % Add history information for the article if required
-\history{}
+%\history{}
+
+
+%% NOTES TO SELF:
+% Cite using:
+%    \citet{...}  in text
+%    \citealp{...}   within parantheses
+%
+% Temporary notifications and reminders:
+\newcommand\NB[1]{{\color{red}#1}}
+\newcommand\NOTE[1]{{\color{red}[#1]}}
+\newcommand\CITE[1]{{\color{magenta}[#1]}}
+
 
 \begin{document}
 
@@ -34,6 +46,7 @@ Norway}
 % Second field is the short title of the paper
 {Exagerated effects after batch correction}
 
+
 \maketitle
 
 % Add a footnote for the corresponding author if one has been
@@ -41,20 +54,10 @@ Norway}
 \footnotetext{To whom correspondence should be addressed.}
 
 \begin{abstract}
-{Removal of, or adjustment for, batch effects or centre differences is generally required when such effects are present in data. In particular, when preparing microarray gene expression data from multiple cohorts, array platforms, or batches for later analyses, batch effects can have confounding effects. Many methods and tools exist for this purpose. One method, ComBat which is part of the R package sva, is particularly popular due to its ability to remove batch differences even when batches are small and heterogeneous, while retaining the difference between study groups, e.g. treatments. Unfortunately, this recommended and frequently used approach to batch correction will systematically induce incorrect group differences in downstream analyses when groups are unevenly distributed between the batches. The scientific community seems to be largely unaware of this problem, which most likely has contributed to false discoveries being presented in the published literature.
+{Removal of, or adjustment for, batch effects or centre differences is generally required when such effects are present in data. In particular, when preparing microarray gene expression data from multiple cohorts, array platforms, or batches for later analyses, batch effects can have confounding effects. Many methods and tools exist for this purpose. One method, ComBat which is part of the R package sva, is particularly popular due to its ability to remove batch differences even when batches are small and heterogeneous. It also has the option, recommended by the authors \NOTE{Anbefalt av dem alle eller kun av Johnson?}, of preserving the difference between study groups, estimated from a two-way ANOVA model, to avoid conflating batch effects and group differences during batch adjustments. Unfortunately, this recommended and frequently used approach may systematically induce incorrect group differences in downstream analyses when groups are distributed between the batches in an unbalanced manner. The scientific community seems to be largely unaware of this problem, which most likely has contributed to false discoveries being presented in the published literature.
 }
 \end{abstract}
 
-
-%% NOTES TO SELF:
-% Cite using:
-%    \citet{...}  in text
-%    \citealp{...}   within parantheses
-%
-% Temporary notifications and reminders:
-\newcommand\NB[1]{{\color{red}#1}}
-\newcommand\NOTE[1]{{\color{red}[#1]}}
-\newcommand\CITE[1]{{\color{magenta}[#1]}}
 
 \section{Introduction}\label{intro}
 
@@ -62,7 +65,8 @@ Extraneous variables, if left unaccounted for, have the potential to lead an inv
 
 For a typical experiment comparing group differences, the presence of batch effects will decrease the statistical power since it adds variation to the data. If the batch--group design is unbalanced, i.e if the study groups are not equally represented in all batches, batch effects may act as a confounder and induce false differences between groups (\citealp{Leek2010}).
 
-The standard way to handle an extraneous variable is to include it in the statistical model employed in the inquiry. However, many analysis tools for high throughput data do not cater for this option, and when available it could still be outside the competence of the investigator. Therefore, an alternative two step procedure has emerged. First the batch effects are estimated and removed, creating a "batch effect free" data set. In the next step, the statistical analyses are performed on the adjusted data without further consideration of batch effects. This appealing compartmentalization is also convenient for practical purposes, for example when data-processing and statistical analyses are performed by different personnel.
+The standard way to handle an extraneous variable is to include it in the statistical model employed in the inquiry. However, many analysis tools for high throughput data do not cater for this option, and when available it could still be outside the competence of the investigator. Therefore, an alternative two step procedure has emerged. First the batch effects are estimated and removed, creating a
+``batch effect free'' data set. In the next step, the statistical analyses are performed on the adjusted data without further consideration of batch effects. This appealing compartmentalization is also convenient for practical purposes, for example when data-processing and statistical analyses are performed by different personnel.
 
 The first step can be achieved by subtracting the mean of the measurements in one batch from all measurements in that batch, i.e mean adjustment or one-way ANOVA adjustment as implemented in the method \texttt{pamr.batchadjust} from the \texttt{pamr} package in R. When the batch--group design is balanced, mean-adjustment will remove most, but not necessarily all, variance attributed to batch and leave the between group variance, thus increasing the statistical power. However, when the batch--group design is unbalanced, batch differences will in part be influences by group differences, and thus batch correction will reduce group differences and thereby reduce the statistical power. In very uneven group--batch designs with multiple groups, spurious group differences may even be induced in this way. Figure~\ref{fig:boxplots} illustrates both these effects.
 
@@ -83,7 +87,7 @@ The ComBat method described in \citet{Johnson2007}, and included in the sva pack
 
 \subsection{Model for data with batch effects}
 
-We will base out discussion of data with batch effects on a simple model:
+We will base our discussion of data with batch effects on a simple model:
 \begin{equation}
 Y_{ijr}=\alpha+\beta_j+\gamma_i+\epsilon_{ijr}
 \end{equation}
@@ -202,7 +206,7 @@ Supplementary material is available online at
 
 \begin{figure}[!p]
 \centering\includegraphics[width=13cm]{Fig/boxplots.png}
-\caption{Simulated data from four study groups, sampled in three different batches, was generated where groups 1 and 2 have lower means than groups 3 and 4. Values and boxes showing mean and two standard errors of the mean are displayed for data without batch effects, after adding batch effects, after batch centering, and after ANOVA based batch centering. The last frame shows the least squares estimates of the group means from a two-way ANOVA analysis with 2 standard errors.}
+\caption{Simulated data from four study groups was generated where groups 1 and 2 have lower means than groups 3 and 4. These were placed in three different batches with batch effect added. Values and boxes showing mean and two standard errors of the mean are displayed for data without batch effects, after adding batch effects, after batch centering, and after ANOVA based batch centering. The last frame shows the least squares estimates of the group means from a two-way ANOVA analysis with 2 standard errors. This case, design and effects, was selected to illustrate the spurious effects that may arise.}
 \label{fig:boxplots}
 \end{figure}
 
