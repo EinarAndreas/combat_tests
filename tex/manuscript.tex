@@ -106,11 +106,11 @@ The main ambition of batch effect adjustments is to be able to remove batch diff
 
 The most common method for removing batch effects is to zero-centre each batch:
 \begin{equation}
-\Delta\widetilde Y_{ijr}=Y_{ijr}-\overline{Y}_{i}
+\Delta\widetilde Y_{ijr}=Y_{ijr}-\bar{Y}_{i}
 \quad\text{where}\quad
-\overline{Y}_i=\frac{\sum_{j=1}^M\sum_{r=1}^{n_{ij}} Y_{ijr}}{\sum_{j=1}^M n_{ij}}.
+\bar{Y}_i=\frac{\sum_{j=1}^M\sum_{r=1}^{n_{ij}} Y_{ijr}}{\sum_{j=1}^M n_{ij}}.
 \end{equation}
-An alternative is to centre each batch to the common average by adding the average value $\overline{Y}$ across the entire data set: i.e. $\widetilde Y_{ijr}=\Delta\widetilde Y_{ijr}+\overline{Y}$. When comparing groups, the common value $\overline{Y}$ has no effect, and so this is equilvalent to zero-centring each batch. However, if the different groups are unevenly represented in the different batches, the batch average $\overline{Y}_i$ will tend to capture group differences as well as batch effects. Thus, batch centering may reduce group differences, and thus reduce the power of downstream analyses.
+An alternative is to centre each batch to the common average by adding the average value $\bar{Y}$ across the entire data set: i.e. $\widetilde Y_{ijr}=\Delta\widetilde Y_{ijr}+\bar{Y}$. When comparing groups, the common value $\bar{Y}$ has no effect, and so this is equilvalent to zero-centring each batch. However, if the different groups are unevenly represented in the different batches, the batch average $\bar{Y}_i$ will tend to capture group differences as well as batch effects. Thus, batch centering may reduce group differences, and thus reduce the power of downstream analyses.
 
 Removing batch effects while retaining group differences can be done through an ANOVA analysis in which the group effects, $\beta_j$, and the batch effects, $\gamma_i$, are estimated simultaneously. Batch adjusted values may then be obtained by subtracting the estimated batch effects, $\hat\beta_j$:
 \begin{equation}
@@ -129,8 +129,41 @@ The undesired consequences of preserving group effects when correcting for batch
 
 %% FIGURE 1: Original position
 
-\NB{Formler og ord:
-Forklare hva som gaar galt med formler og ord. Overlater til Einar aa skrive dette.}
+\subsection{Explanation for the simple two-group comparison}
+
+To explain more clearly what is happening, and quantify the size of the problem, we may consider the simple case of estimating the difference $\Delta\beta=\beta_A-\beta_B$ between two groups, $A$ and $B$, when there are $m$ batches with batch $i$ containing $n_{iA}$ and $n_{iB}$ samples from each of the two groups for $i=1,\ldots,m$.
+
+If we estimate the group difference within batch $i$, we get
+\begin{equation}
+\widehat{\Delta\beta}_i=\bar{Y}_{iA}-\bar{Y}_{iB}\sim\text{N}\left(\Delta\beta,\frac{\sigma^2}{\nu_i}\right)
+\quad\text{where}\quad
+\bar{Y}_{ij}=\frac{\sum_{r=1}^{n_{ij}}Y_{ijr}}{n_{ij}},\,
+\nu_i=\frac{1}{\frac{1}{n_{iA}}+\frac{1}{n_{iB}}},
+\end{equation}
+from which we may express the overall estimate of $\Delta\beta$
+\begin{equation}
+\widehat{\Delta\beta}=\frac{\sum_{i=1}^m \nu_i\,\widehat{\Delta\beta}_i}{\nu}
+\sim\text{N}\left(\Delta\beta,\frac{\sigma^2}{\nu}\right)
+\quad\text{where}\quad
+\nu=\sum_{i=1}^m\nu_i.
+\end{equation}
+
+If batch and group effects are estimated using a two-way ANOVA, the estimate $\widehat{\Delta\beta}$ will be as stated above, and so the estimated group difference is unaffected. The batch effects are then removed, and the estimated group differences retained, leaving the estimated $\widehat{\Delta\beta}$ unchanged by the batch adjustment. However, if this batch adjusted data set is analysed without considering batch effects, the variance of $\widehat{\Delta\beta}$ will be computed under the assumption that it is derived from a comparison of $n_A=\sum_{i=1}^m n_{iA}$ versus $n_B=\sum_{i=1}^m n_{iB}$ samples, and thus satisfy
+\begin{equation}
+\widehat{\Delta\beta}
+\sim\text{N}\left(\Delta\beta,\sigma^2\cdot\left(\frac{1}{n_A}+\frac{1}{n_B}\right)\right).
+\end{equation}
+Using Jensen's inequality, we may then derive
+\begin{equation}
+\frac{1}{\frac{1}{n_A}+\frac{1}{n_B}}=n\cdot\frac{n_A}{n}\cdot\frac{n_B}{n}
+\le
+\nu
+=\sum_{i=1}^m \frac{1}{\frac{1}{n_{iA}}+\frac{1}{n_{iB}}}
+=\sum_{i=1}^m n_i\cdot\frac{n_{iA}}{n_i}\cdot\frac{n_{iB}}{n_i}
+\end{equation}
+with equality if and only if the ratios $n_{iA}:n_{iB}=n_A:n_B$ for all batches $i=1,\ldots,m$.
+
+
 
 \subsection{Examples of undesired consequences}
 
