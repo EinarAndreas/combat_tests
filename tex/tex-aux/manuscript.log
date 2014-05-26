@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-2.4-1.40.13 (MiKTeX 2.9) (preloaded format=pdflatex 2012.6.20)  22 APR 2014 17:27
+This is pdfTeX, Version 3.1415926-2.4-1.40.13 (MiKTeX 2.9) (preloaded format=pdflatex 2012.6.20)  2 MAY 2014 18:14
 entering extended mode
 **manuscript.tex
 (D:\Store\Git\combat_tests\tex\manuscript.tex
@@ -530,31 +530,7 @@ File: babel.def 2008/07/08 v3.8m Babel common definitions
 \l@canadian = a dialect from \language\l@american 
 \l@australian = a dialect from \language\l@british 
 \l@newzealand = a dialect from \language\l@british 
-)) (D:\Store\Git\combat_tests\tex\tex-aux\manuscript.aux)
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 22.
-LaTeX Font Info:    ... okay on input line 22.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 22.
-LaTeX Font Info:    ... okay on input line 22.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 22.
-LaTeX Font Info:    ... okay on input line 22.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 22.
-LaTeX Font Info:    ... okay on input line 22.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 22.
-LaTeX Font Info:    ... okay on input line 22.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 22.
-LaTeX Font Info:    ... okay on input line 22.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 22.
-LaTeX Font Info:    ... okay on input line 22.
-Package lastpage Info: Please have a look at the pageslts package at
-(lastpage)             http://www.ctan.org/tex-archive/ 
-(lastpage)             macros/latex/contrib/pageslts/ 
-(lastpage)             or
-(lastpage)             http://www.ctan.org/tex-archive/ 
-(lastpage)             install/macros/latex/contrib/pageslts.tds.zip
-(lastpage)             ! on input line 22.
-\AtBeginShipoutBox=\box35
-
-(D:\Store\Git\combat_tests\tex\color.sty
+)) (D:\Store\Git\combat_tests\tex\color.sty
 Package: color 1999/02/16 v1.0i Standard LaTeX Color (DPC)
 
 (C:\MiKTeX\tex\latex\00miktex\color.cfg
@@ -565,48 +541,75 @@ Package color Info: Driver file: pdftex.def on input line 125.
 (C:\MiKTeX\tex\latex\pdftex-def\pdftex.def
 File: pdftex.def 2011/05/27 v0.06d Graphics/color for pdfTeX
 \Gread@gobject=\count112
+))
+(D:\Store\Git\combat_tests\tex\tex-aux\manuscript.aux)
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 27.
+LaTeX Font Info:    ... okay on input line 27.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 27.
+LaTeX Font Info:    ... okay on input line 27.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 27.
+LaTeX Font Info:    ... okay on input line 27.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 27.
+LaTeX Font Info:    ... okay on input line 27.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 27.
+LaTeX Font Info:    ... okay on input line 27.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 27.
+LaTeX Font Info:    ... okay on input line 27.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 27.
+LaTeX Font Info:    ... okay on input line 27.
+Package lastpage Info: Please have a look at the pageslts package at
+(lastpage)             http://www.ctan.org/tex-archive/ 
+(lastpage)             macros/latex/contrib/pageslts/ 
+(lastpage)             or
+(lastpage)             http://www.ctan.org/tex-archive/ 
+(lastpage)             install/macros/latex/contrib/pageslts.tds.zip
+(lastpage)             ! on input line 27.
+\AtBeginShipoutBox=\box35
+Package hyperref Info: Link coloring ON on input line 27.
 
-(C:\MiKTeX\tex\context\base\supp-pdf.mkii
-[Loading MPS to PDF converter (version 2006.09.02).]
-\scratchcounter=\count113
-\scratchdimen=\dimen135
-\scratchbox=\box36
-\nofMPsegments=\count114
-\nofMParguments=\count115
-\everyMPshowfont=\toks32
-\MPscratchCnt=\count116
-\MPscratchDim=\dimen136
-\MPnumerator=\count117
-\makeMPintoPDFobject=\count118
-\everyMPtoPDFconversion=\toks33
-)))
-Package hyperref Info: Link coloring ON on input line 22.
- (C:\MiKTeX\tex\latex\hyperref\nameref.sty
+(C:\MiKTeX\tex\latex\hyperref\nameref.sty
 Package: nameref 2010/04/30 v2.40 Cross-referencing by name of section
 
 (C:\MiKTeX\tex\generic\oberdiek\gettitlestring.sty
 Package: gettitlestring 2010/12/03 v1.4 Cleanup title references (HO)
 )
-\c@section@level=\count119
+\c@section@level=\count113
 )
-LaTeX Info: Redefining \ref on input line 22.
-LaTeX Info: Redefining \pageref on input line 22.
-LaTeX Info: Redefining \nameref on input line 22.
+LaTeX Info: Redefining \ref on input line 27.
+LaTeX Info: Redefining \pageref on input line 27.
+LaTeX Info: Redefining \nameref on input line 27.
 
 (D:\Store\Git\combat_tests\tex\tex-aux\manuscript.out)
 (D:\Store\Git\combat_tests\tex\tex-aux\manuscript.out)
 \@outlinefile=\write4
-LaTeX Font Info:    Try loading font information for U+msa on input line 51.
 
-(C:\MiKTeX\tex\latex\amsfonts\umsa.fd
+(C:\MiKTeX\tex\context\base\supp-pdf.mkii
+[Loading MPS to PDF converter (version 2006.09.02).]
+\scratchcounter=\count114
+\scratchdimen=\dimen135
+\scratchbox=\box36
+\nofMPsegments=\count115
+\nofMParguments=\count116
+\everyMPshowfont=\toks32
+\MPscratchCnt=\count117
+\MPscratchDim=\dimen136
+\MPnumerator=\count118
+\makeMPintoPDFobject=\count119
+\everyMPtoPDFconversion=\toks33
+)
+LaTeX Font Info:    Try loading font information for U+msa on input line 29.
+ (C:\MiKTeX\tex\latex\amsfonts\umsa.fd
 File: umsa.fd 2009/06/22 v3.00 AMS symbols A
 )
-LaTeX Font Info:    Try loading font information for U+msb on input line 51.
+LaTeX Font Info:    Try loading font information for U+msb on input line 29.
  (C:\MiKTeX\tex\latex\amsfonts\umsb.fd
 File: umsb.fd 2009/06/22 v3.00 AMS symbols B
 )
 
-Package hyperref Warning: Ignoring empty anchor on input line 54.
+Package hyperref Warning: Ignoring empty anchor on input line 29.
+
+
+Package hyperref Warning: Ignoring empty anchor on input line 61.
 
 
 Underfull \hbox (badness 10000) has occurred while \output is active
@@ -619,51 +622,51 @@ Overfull \vbox (10.0pt too high) has occurred while \output is active []
 
 
 LaTeX Font Warning: Font shape `OT1/cmr/m/n' in size <6.5> not available
-(Font)              size <6> substituted on input line 69.
+(Font)              size <6> substituted on input line 75.
 
-LaTeX Font Info:    Calculating math sizes for size <6.5> on input line 69.
+LaTeX Font Info:    Calculating math sizes for size <6.5> on input line 75.
 
 LaTeX Font Warning: Font shape `OT1/cmr/m/n' in size <4.54997> not available
-(Font)              size <5> substituted on input line 69.
+(Font)              size <5> substituted on input line 75.
 
 
 LaTeX Font Warning: Font shape `OT1/cmr/m/n' in size <3.25> not available
-(Font)              size <5> substituted on input line 69.
+(Font)              size <5> substituted on input line 75.
 
 
 LaTeX Font Warning: Font shape `OML/cmm/m/it' in size <6.5> not available
-(Font)              size <6> substituted on input line 69.
+(Font)              size <6> substituted on input line 75.
 
 
 LaTeX Font Warning: Font shape `OML/cmm/m/it' in size <4.54997> not available
-(Font)              size <5> substituted on input line 69.
+(Font)              size <5> substituted on input line 75.
 
 
 LaTeX Font Warning: Font shape `OML/cmm/m/it' in size <3.25> not available
-(Font)              size <5> substituted on input line 69.
+(Font)              size <5> substituted on input line 75.
 
 
 LaTeX Font Warning: Font shape `OMS/cmsy/m/n' in size <6.5> not available
-(Font)              size <6> substituted on input line 69.
+(Font)              size <6> substituted on input line 75.
 
 
 LaTeX Font Warning: Font shape `OMS/cmsy/m/n' in size <4.54997> not available
-(Font)              size <5> substituted on input line 69.
+(Font)              size <5> substituted on input line 75.
 
 
 LaTeX Font Warning: Font shape `OMS/cmsy/m/n' in size <3.25> not available
-(Font)              size <5> substituted on input line 69.
+(Font)              size <5> substituted on input line 75.
 
-LaTeX Font Info:    Try loading font information for OMS+cmr on input line 69.
+LaTeX Font Info:    Try loading font information for OMS+cmr on input line 75.
 (C:\MiKTeX\tex\latex\base\omscmr.fd
 File: omscmr.fd 1999/05/25 v2.5h Standard LaTeX font definitions
 )
 LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <6.5> not available
-(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 69.
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 75.
 
 
 LaTeX Font Warning: Font shape `OMS/cmsy/m/n' in size <6.5> not available
-(Font)              size <6> substituted on input line 69.
+(Font)              size <6> substituted on input line 75.
 
 [1{C:/Users/einarro/AppData/Local/MiKTeX/2.9/pdftex/config/pdftex.map}]
 Underfull \vbox (badness 10000) has occurred while \output is active []
@@ -681,7 +684,8 @@ Overfull \vbox (6.83331pt too high) has occurred while \output is active []
 
 
 [4]
-Underfull \vbox (badness 10000) has occurred while \output is active []
+
+LaTeX Warning: Reference `fig:p-towfic' on page 5 undefined on input line 184.
 
 
 Overfull \vbox (6.94444pt too high) has occurred while \output is active []
@@ -695,46 +699,49 @@ Overfull \vbox (6.83331pt too high) has occurred while \output is active []
 
 
 [6]
-Overfull \hbox (7.41765pt too wide) in paragraph at lines 219--220
-\OT1/cmr/m/n/10 [vi boer klare aa til-fred-stille kravene i http://biostatistic
-s.oxfordjournals.org/content/10/3/405.full][] 
+Overfull \hbox (4.92769pt too wide) in paragraph at lines 236--237
+[]\OT1/cmr/m/it/10 [vi boer klare aa til-fred-stille kravene i http://biostatis
+tics.oxfordjournals.org/content/10/3/405.full][] 
  []
 
 (D:\Store\Git\combat_tests\tex\tex-aux\manuscript.bbl
-Overfull \vbox (6.83331pt too high) has occurred while \output is active []
+Underfull \vbox (badness 10000) has occurred while \output is active []
 
 
-[7]) <Fig/boxplots.png, id=176, 2710.125pt x 903.375pt>
+Overfull \vbox (6.94444pt too high) has occurred while \output is active []
+
+
+[7]) <Fig/boxplots.png, id=192, 2710.125pt x 903.375pt>
 File: Fig/boxplots.png Graphic file (type png)
  <use Fig/boxplots.png>
-Package pdftex.def Info: Fig/boxplots.png used on input line 240.
+Package pdftex.def Info: Fig/boxplots.png used on input line 257.
 (pdftex.def)             Requested size: 369.88582pt x 123.28745pt.
 
-<Fig/pvaluesleeksva.png, id=178, 963.6pt x 481.8pt>
+<Fig/pvaluesleeksva.png, id=194, 963.6pt x 481.8pt>
 File: Fig/pvaluesleeksva.png Graphic file (type png)
 
 <use Fig/pvaluesleeksva.png>
-Package pdftex.def Info: Fig/pvaluesleeksva.png used on input line 247.
+Package pdftex.def Info: Fig/pvaluesleeksva.png used on input line 264.
 (pdftex.def)             Requested size: 369.88582pt x 184.9385pt.
 
-<Fig/pvaluestowfic.png, id=179, 963.6pt x 963.6pt>
+<Fig/pvaluestowfic.png, id=195, 963.6pt x 963.6pt>
 File: Fig/pvaluestowfic.png Graphic file (type png)
  <use Fig/pvaluestowfic.png>
-Package pdftex.def Info: Fig/pvaluestowfic.png used on input line 257.
+Package pdftex.def Info: Fig/pvaluestowfic.png used on input line 274.
 (pdftex.def)             Requested size: 369.88582pt x 369.87704pt.
 
-<Fig/pvaluesjohnson.png, id=180, 963.6pt x 963.6pt>
+<Fig/pvaluesjohnson.png, id=196, 963.6pt x 963.6pt>
 File: Fig/pvaluesjohnson.png Graphic file (type png)
 
 <use Fig/pvaluesjohnson.png>
-Package pdftex.def Info: Fig/pvaluesjohnson.png used on input line 270.
+Package pdftex.def Info: Fig/pvaluesjohnson.png used on input line 287.
 (pdftex.def)             Requested size: 369.88582pt x 369.87704pt.
 
-<Fig/pvaluesjohnson2.png, id=185, 963.6pt x 963.6pt>
+<Fig/pvaluesjohnson2.png, id=201, 963.6pt x 963.6pt>
 File: Fig/pvaluesjohnson2.png Graphic file (type png)
 
 <use Fig/pvaluesjohnson2.png>
-Package pdftex.def Info: Fig/pvaluesjohnson2.png used on input line 283.
+Package pdftex.def Info: Fig/pvaluesjohnson2.png used on input line 300.
 (pdftex.def)             Requested size: 369.88582pt x 369.87704pt.
  
 AED: lastpage setting LastPage
@@ -760,28 +767,31 @@ Overfull \vbox (6.83331pt too high) has occurred while \output is active []
 
 
 [12 <D:/Store/Git/combat_tests/tex/Fig/pvaluesjohnson2.png>]
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 301.
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 301.
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 318.
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 318.
 
 (D:\Store\Git\combat_tests\tex\tex-aux\manuscript.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 301.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 301.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 318.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 318.
 Package rerunfilecheck Info: File `manuscript.out' has not changed.
-(rerunfilecheck)             Checksum: E13DECD803FBA378A19450FBF30063CA;930.
+(rerunfilecheck)             Checksum: 03A96DAFF828C03050277F5CBF86DD4E;1142.
 
 
 LaTeX Font Warning: Size substitutions with differences
 (Font)              up to 1.75pt have occurred.
 
+
+LaTeX Warning: There were undefined references.
+
  ) 
 Here is how much of TeX's memory you used:
- 7152 strings out of 493921
- 96486 string characters out of 3154494
- 203511 words of memory out of 3000000
- 10296 multiletter control sequences out of 15000+200000
+ 7165 strings out of 493921
+ 96690 string characters out of 3154494
+ 204545 words of memory out of 3000000
+ 10305 multiletter control sequences out of 15000+200000
  12757 words of font info for 51 fonts, out of 3000000 for 9000
  841 hyphenation exceptions out of 8191
- 34i,14n,29p,1786b,433s stack positions out of 5000i,500n,10000p,200000b,50000s
+ 34i,15n,29p,1786b,423s stack positions out of 5000i,500n,10000p,200000b,50000s
 pdfTeX warning (dest): name{page.} has been referenced but does not exist, re
 placed by a fixed one
 
@@ -799,9 +809,9 @@ TeX/fonts/type1/public/amsfonts/cm/cmsy7.pfb><C:/MiKTeX/fonts/type1/public/amsf
 onts/cm/cmti10.pfb><C:/MiKTeX/fonts/type1/public/amsfonts/cm/cmti9.pfb><C:/MiKT
 eX/fonts/type1/public/amsfonts/cm/cmtt10.pfb><C:/MiKTeX/fonts/type1/public/amsf
 onts/symbols/msam10.pfb>
-Output written on manuscript.pdf (12 pages, 624207 bytes).
+Output written on manuscript.pdf (12 pages, 641154 bytes).
 PDF statistics:
- 290 PDF objects out of 1000 (max. 8388607)
- 51 named destinations out of 1000 (max. 500000)
- 130 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 306 PDF objects out of 1000 (max. 8388607)
+ 55 named destinations out of 1000 (max. 500000)
+ 154 words of extra memory for PDF output out of 10000 (max. 10000000)
 
