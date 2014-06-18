@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-2.4-1.40.13 (MiKTeX 2.9) (preloaded format=pdflatex 2012.6.20)  26 MAY 2014 22:55
+This is pdfTeX, Version 3.1415926-2.4-1.40.13 (MiKTeX 2.9) (preloaded format=pdflatex 2012.6.20)  17 JUN 2014 18:37
 entering extended mode
 **manuscript.tex
 (D:\Store\Git\combat_tests\tex\manuscript.tex
@@ -609,7 +609,7 @@ File: umsb.fd 2009/06/22 v3.00 AMS symbols B
 Package hyperref Warning: Ignoring empty anchor on input line 29.
 
 
-Package hyperref Warning: Ignoring empty anchor on input line 61.
+Package hyperref Warning: Ignoring empty anchor on input line 65.
 
 
 Underfull \hbox (badness 10000) has occurred while \output is active
@@ -622,51 +622,51 @@ Overfull \vbox (10.0pt too high) has occurred while \output is active []
 
 
 LaTeX Font Warning: Font shape `OT1/cmr/m/n' in size <6.5> not available
-(Font)              size <6> substituted on input line 76.
+(Font)              size <6> substituted on input line 78.
 
-LaTeX Font Info:    Calculating math sizes for size <6.5> on input line 76.
+LaTeX Font Info:    Calculating math sizes for size <6.5> on input line 78.
 
 LaTeX Font Warning: Font shape `OT1/cmr/m/n' in size <4.54997> not available
-(Font)              size <5> substituted on input line 76.
+(Font)              size <5> substituted on input line 78.
 
 
 LaTeX Font Warning: Font shape `OT1/cmr/m/n' in size <3.25> not available
-(Font)              size <5> substituted on input line 76.
+(Font)              size <5> substituted on input line 78.
 
 
 LaTeX Font Warning: Font shape `OML/cmm/m/it' in size <6.5> not available
-(Font)              size <6> substituted on input line 76.
+(Font)              size <6> substituted on input line 78.
 
 
 LaTeX Font Warning: Font shape `OML/cmm/m/it' in size <4.54997> not available
-(Font)              size <5> substituted on input line 76.
+(Font)              size <5> substituted on input line 78.
 
 
 LaTeX Font Warning: Font shape `OML/cmm/m/it' in size <3.25> not available
-(Font)              size <5> substituted on input line 76.
+(Font)              size <5> substituted on input line 78.
 
 
 LaTeX Font Warning: Font shape `OMS/cmsy/m/n' in size <6.5> not available
-(Font)              size <6> substituted on input line 76.
+(Font)              size <6> substituted on input line 78.
 
 
 LaTeX Font Warning: Font shape `OMS/cmsy/m/n' in size <4.54997> not available
-(Font)              size <5> substituted on input line 76.
+(Font)              size <5> substituted on input line 78.
 
 
 LaTeX Font Warning: Font shape `OMS/cmsy/m/n' in size <3.25> not available
-(Font)              size <5> substituted on input line 76.
+(Font)              size <5> substituted on input line 78.
 
-LaTeX Font Info:    Try loading font information for OMS+cmr on input line 76.
+LaTeX Font Info:    Try loading font information for OMS+cmr on input line 78.
 (C:\MiKTeX\tex\latex\base\omscmr.fd
 File: omscmr.fd 1999/05/25 v2.5h Standard LaTeX font definitions
 )
 LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <6.5> not available
-(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 76.
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 78.
 
 
 LaTeX Font Warning: Font shape `OMS/cmsy/m/n' in size <6.5> not available
-(Font)              size <6> substituted on input line 76.
+(Font)              size <6> substituted on input line 78.
 
 [1{C:/Users/einarro/AppData/Local/MiKTeX/2.9/pdftex/config/pdftex.map}]
 Underfull \vbox (badness 10000) has occurred while \output is active []
@@ -680,12 +680,21 @@ Overfull \vbox (6.94444pt too high) has occurred while \output is active []
 
 
 [3]
+Underfull \vbox (badness 10000) has occurred while \output is active []
+
+
 Overfull \vbox (6.83331pt too high) has occurred while \output is active []
 
 
 [4]
 
-LaTeX Warning: Reference `fig:p-towfic' on page 5 undefined on input line 184.
+LaTeX Warning: Reference `fig:p-towfic' on page 5 undefined on input line 188.
+
+
+LaTeX Warning: Reference `fig:p-values' on page 5 undefined on input line 194.
+
+
+LaTeX Warning: Reference `fig:p-values' on page 5 undefined on input line 194.
 
 
 Overfull \vbox (6.94444pt too high) has occurred while \output is active []
@@ -711,33 +720,33 @@ Underfull \vbox (badness 10000) has occurred while \output is active []
 Overfull \vbox (6.94444pt too high) has occurred while \output is active []
 
 
-[7]) <Fig/boxplots.png, id=192, 2710.125pt x 903.375pt>
+[7]) <Fig/boxplots.png, id=186, 2710.125pt x 903.375pt>
 File: Fig/boxplots.png Graphic file (type png)
  <use Fig/boxplots.png>
 Package pdftex.def Info: Fig/boxplots.png used on input line 257.
 (pdftex.def)             Requested size: 369.88582pt x 123.28745pt.
 
-<Fig/pvaluesleeksva.png, id=194, 963.6pt x 481.8pt>
+<Fig/pvaluesleeksva.png, id=188, 963.6pt x 481.8pt>
 File: Fig/pvaluesleeksva.png Graphic file (type png)
 
 <use Fig/pvaluesleeksva.png>
 Package pdftex.def Info: Fig/pvaluesleeksva.png used on input line 264.
 (pdftex.def)             Requested size: 369.88582pt x 184.9385pt.
 
-<Fig/pvaluestowfic.png, id=195, 963.6pt x 963.6pt>
+<Fig/pvaluestowfic.png, id=189, 963.6pt x 963.6pt>
 File: Fig/pvaluestowfic.png Graphic file (type png)
  <use Fig/pvaluestowfic.png>
 Package pdftex.def Info: Fig/pvaluestowfic.png used on input line 274.
 (pdftex.def)             Requested size: 369.88582pt x 369.87704pt.
 
-<Fig/pvaluesjohnson.png, id=196, 963.6pt x 963.6pt>
+<Fig/pvaluesjohnson.png, id=190, 963.6pt x 963.6pt>
 File: Fig/pvaluesjohnson.png Graphic file (type png)
 
 <use Fig/pvaluesjohnson.png>
 Package pdftex.def Info: Fig/pvaluesjohnson.png used on input line 287.
 (pdftex.def)             Requested size: 369.88582pt x 369.87704pt.
 
-<Fig/pvaluesjohnson2.png, id=201, 963.6pt x 963.6pt>
+<Fig/pvaluesjohnson2.png, id=195, 963.6pt x 963.6pt>
 File: Fig/pvaluesjohnson2.png Graphic file (type png)
 
 <use Fig/pvaluesjohnson2.png>
@@ -783,17 +792,23 @@ LaTeX Font Warning: Size substitutions with differences
 
 LaTeX Warning: There were undefined references.
 
+
+LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
+
  ) 
 Here is how much of TeX's memory you used:
- 7165 strings out of 493921
- 96690 string characters out of 3154494
- 204548 words of memory out of 3000000
- 10305 multiletter control sequences out of 15000+200000
+ 7167 strings out of 493921
+ 96711 string characters out of 3154494
+ 205665 words of memory out of 3000000
+ 10306 multiletter control sequences out of 15000+200000
  12757 words of font info for 51 fonts, out of 3000000 for 9000
  841 hyphenation exceptions out of 8191
- 34i,14n,29p,1786b,423s stack positions out of 5000i,500n,10000p,200000b,50000s
-pdfTeX warning (dest): name{page.} has been referenced but does not exist, re
-placed by a fixed one
+ 34i,14n,29p,1751b,340s stack positions out of 5000i,500n,10000p,200000b,50000s
+pdfTeX warning (dest): name{page.13} has been referenced but does not exist, 
+replaced by a fixed one
+
+pdfTeX warning (dest): name{page.} has been referenced but does not exist, repl
+aced by a fixed one
 
 <C:/MiKTeX/fonts/type1/public/amsfonts/cm/cmbx10.pfb><C:/MiKTeX/fonts/type1/pub
 lic/amsfonts/cm/cmbx12.pfb><C:/MiKTeX/fonts/type1/public/amsfonts/cm/cmbx9.pfb>
@@ -809,9 +824,9 @@ TeX/fonts/type1/public/amsfonts/cm/cmsy7.pfb><C:/MiKTeX/fonts/type1/public/amsf
 onts/cm/cmti10.pfb><C:/MiKTeX/fonts/type1/public/amsfonts/cm/cmti9.pfb><C:/MiKT
 eX/fonts/type1/public/amsfonts/cm/cmtt10.pfb><C:/MiKTeX/fonts/type1/public/amsf
 onts/symbols/msam10.pfb>
-Output written on manuscript.pdf (12 pages, 641223 bytes).
+Output written on manuscript.pdf (12 pages, 639821 bytes).
 PDF statistics:
- 306 PDF objects out of 1000 (max. 8388607)
- 55 named destinations out of 1000 (max. 500000)
+ 303 PDF objects out of 1000 (max. 8388607)
+ 56 named destinations out of 1000 (max. 500000)
  154 words of extra memory for PDF output out of 10000 (max. 10000000)
 
